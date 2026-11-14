@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0a0d12">
+<script>try{if(localStorage.getItem('cprTimer.theme')==='eva'){document.documentElement.setAttribute('data-theme','eva');document.querySelector('meta[name="theme-color"]').content='#000000';}}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -100,7 +101,8 @@
   .epiStatus { font-size: 14px; margin-top: 8px; }
   #epiCard[data-state="remind"] { border-color: var(--epi); }
   #epiCard[data-state="remind"] .epiTime { color: var(--epi); }
-  #epiCard[data-state="over"] { border-color: var(--danger); }
+  #epiCard[data-state="over"] { border-color: var(--danger); box-shadow: 0 0 0 2px rgba(255,93,93,.35) inset; animation: pulse 1s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { #epiCard[data-state="over"] { animation: none; background: #2a1414; } }
   #epiCard[data-state="over"] .epiTime { color: var(--danger); }
   .htList { display: grid; gap: 6px; }
   .htList label { display: flex; align-items: center; gap: 10px; font-size: 15px; padding: 8px 6px; border-bottom: 1px solid var(--line); cursor: pointer; }
@@ -114,6 +116,7 @@
   .logMeta { font-size: 12px; color: var(--muted); font-weight: 400; }
   ol.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; align-content: start;
            height: 45vh; overflow-y: auto; overscroll-behavior: contain; } /* 固定高度，卡片內捲動 */
+  @media (max-width: 600px) { ol.log { height: 280px; } } /* 手機：約 4–5 筆，其餘捲動 */
   .log li { display: grid; grid-template-columns: 62px 48px 1fr; gap: 6px; align-items: baseline; font-size: 14px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
   .log .rel { font-variant-numeric: tabular-nums; color: var(--accent); }
   .log .tag { font-size: 11px; color: var(--muted); }
@@ -222,6 +225,356 @@
   @media (min-width: 900px) and (orientation: landscape) and (max-height: 820px) {
     .colL .bigtime { font-size: clamp(44px, calc(100cqh - 515px), 130px); }
   }
+
+  /* ===================================================================
+     EVA 終端機 theme — every rule below is scoped to html[data-theme="eva"]
+     (except @font-face, which only downloads when a rule uses the family,
+     and the badge default display:none). Original theme is untouched.
+     =================================================================== */
+  @font-face { font-family: "DSEG7"; src: url(fonts/DSEG7Classic-Bold.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: "SerifTC"; src: url(fonts/NotoSerifTC-900-subset.woff2) format("woff2"); font-weight: 900; font-display: swap; }
+  @font-face { font-family: "Antonio"; src: url(fonts/Antonio-subset.woff2) format("woff2"); font-weight: 100 700; font-display: swap; }
+  .evgrid > .cnt { display: none; }
+  .rhyRow { display: none; }
+
+  html[data-theme="eva"] {
+    --bg: #000; --card: rgba(14,7,0,.92); --card2: #000; --line: #7A4A12; --text: #FFE2B8; --muted: #C98A45;
+    --accent: #FF9A1F; --ok: #39FF6A; --warn: #FFD400; --danger: #FF4D3D; --epi: #FF9A1F; --amio: #FF9A1F;
+    --e-amber: #FF9A1F; --e-total: #FFB347; --e-ghost: rgba(255,154,31,.07); --e-glow: 0 0 10px rgba(255,140,0,.55);
+    --e-track: #1A0C00; --e-track-b: #7A4A12; --e-window: rgba(57,255,106,.28); --e-rule: rgba(255,154,31,.28);
+    --e-ui: "Noto Sans CJK TC", "Noto Sans TC", "PingFang TC", -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", sans-serif;
+    --e-head: "SerifTC", "Noto Serif CJK TC", serif;
+    --e-cond: "Antonio", "Barlow Condensed", "Arial Narrow", sans-serif;
+    --e-seg: "DSEG7", ui-monospace, monospace;
+  }
+  html[data-theme="eva"], html[data-theme="eva"] body { height: auto; overflow: visible; }
+  html[data-theme="eva"] body {
+    font-family: var(--e-ui); -webkit-font-smoothing: antialiased;
+    background: repeating-linear-gradient(0deg, rgba(255,154,31,.045) 0 1px, transparent 1px 3px), #000;
+    background-attachment: fixed;
+  }
+
+  /* ---- layout: phone single column (≤999px) ---- */
+  html[data-theme="eva"] main { max-width: 720px; height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 8px; row-gap: 8px; position: relative; }
+  html[data-theme="eva"] .col { display: contents; }
+  html[data-theme="eva"] header { order: 1; margin: 0; }
+  html[data-theme="eva"] .alertBar { order: 2; margin: 0; }
+  html[data-theme="eva"] .banner { order: 3; margin: 0; }
+  html[data-theme="eva"] #cprCard { order: 4; }
+  html[data-theme="eva"] #epiCard { order: 5; }
+  html[data-theme="eva"] [aria-labelledby="evH"] { order: 6; }
+  html[data-theme="eva"] #htCard { order: 7; }
+  html[data-theme="eva"] .logCard { order: 8; }
+  html[data-theme="eva"] details.setCard:not(#htCard) { order: 9; }
+
+  /* ---- frames + corner brackets ---- */
+  html[data-theme="eva"] .card { position: relative; background: var(--card); border: 1.5px solid var(--e-amber); border-radius: 0; padding: 9px 11px 11px; }
+  html[data-theme="eva"] .card::before, html[data-theme="eva"] .card::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+  html[data-theme="eva"] .card::before { top: -1.5px; left: -1.5px; border-top: 4px solid var(--e-amber); border-left: 4px solid var(--e-amber); }
+  html[data-theme="eva"] .card::after { bottom: -1.5px; right: -1.5px; border-bottom: 4px solid var(--e-amber); border-right: 4px solid var(--e-amber); }
+  /* log card stays position:static so the total-elapsed block can be lifted into the header (containing block = main);
+     its corner brackets are drawn with backgrounds instead of pseudo-elements */
+  html[data-theme="eva"] .logCard { position: static;
+    background: linear-gradient(var(--e-amber), var(--e-amber)) top left / 14px 4px no-repeat border-box,
+                linear-gradient(var(--e-amber), var(--e-amber)) top left / 4px 14px no-repeat border-box,
+                linear-gradient(var(--e-amber), var(--e-amber)) bottom right / 14px 4px no-repeat border-box,
+                linear-gradient(var(--e-amber), var(--e-amber)) bottom right / 4px 14px no-repeat border-box, var(--card);
+    background-origin: border-box; }
+  html[data-theme="eva"] .logCard::before, html[data-theme="eva"] .logCard::after { content: none; }
+  html[data-theme="eva"] .card h2 { font: 800 16px/1.15 var(--e-ui); color: var(--e-amber); margin: 0 0 6px; align-items: flex-start; }
+  html[data-theme="eva"] .subNote { color: var(--muted); }
+
+  /* ---- header: 心肺復甦 + status line; total elapsed is lifted from the log card ---- */
+  html[data-theme="eva"] header { display: block; position: static; padding: 4px 2px 8px; border-bottom: 1.5px solid var(--e-amber); }
+  html[data-theme="eva"] h1 { font-size: 0; margin: 0 168px 0 0; min-height: 80px; display: flex; flex-direction: column; justify-content: flex-end; }
+  html[data-theme="eva"] h1 small { display: none; }
+  html[data-theme="eva"] h1::before { content: "心肺復甦"; font: 900 31px/1 var(--e-head); letter-spacing: .04em; color: var(--e-amber); text-shadow: 0 0 12px rgba(255,140,0,.45); white-space: nowrap; }
+  html[data-theme="eva"] h1::after { content: "● STANDBY / 待命"; margin-top: 6px; font: 600 12px/1 var(--e-cond); letter-spacing: .12em; color: var(--e-amber); white-space: nowrap; }
+  html[data-theme="eva"] main:has(#cprCard[data-state="running"]) h1::after,
+  html[data-theme="eva"] main:has(#cprCard[data-state="due"]) h1::after { content: "● CODE ACTIVE / 急救進行中"; }
+  html[data-theme="eva"] main:has(#cprCard[data-state="paused"]) h1::after { content: "Ⅱ PAUSED / 暫停中"; color: var(--warn); }
+  html[data-theme="eva"] main:has(#cprCard[data-state="rosc"]) h1::after { content: "● ROSC / 自發循環恢復"; color: var(--ok); }
+  html[data-theme="eva"] .chips { margin-top: 8px; gap: 5px; }
+  html[data-theme="eva"] .chip { border-radius: 0; background: #000; border: 1px solid var(--e-track-b); color: var(--muted); font-family: var(--e-ui); font-weight: 700; font-size: 11.5px; padding: 4px 7px; }
+  html[data-theme="eva"] .chip.on { border-color: var(--ok); color: var(--ok); }
+  html[data-theme="eva"] .chip.bad { border-color: var(--warn); color: var(--warn); }
+  html[data-theme="eva"] .logHead .total { position: absolute; top: 4px; right: 2px; display: flex; flex-direction: column; align-items: flex-end; text-align: right; font: 700 13px/1.1 var(--e-ui); color: var(--muted); }
+  html[data-theme="eva"] .logHead .total::after { content: "TOTAL ELAPSED"; order: 1; font: 500 10.5px/1.15 var(--e-cond); letter-spacing: .14em; color: var(--muted); }
+  html[data-theme="eva"] .logHead .total .subNote { display: none; }
+  html[data-theme="eva"] .logHead .total b { order: 2; margin-top: 5px; font-size: 42px; color: var(--e-total); }
+
+  /* ---- 7-segment timers with ghost 88:88 layer ---- */
+  html[data-theme="eva"] #cprTime, html[data-theme="eva"] #epiTime, html[data-theme="eva"] #totalTime {
+    position: relative; isolation: isolate; width: max-content; font-family: var(--e-seg); font-weight: 700;
+    font-variant-numeric: normal; letter-spacing: 0; line-height: 1; white-space: nowrap; color: var(--e-amber); text-shadow: var(--e-glow);
+  }
+  html[data-theme="eva"] #cprTime::before, html[data-theme="eva"] #epiTime::before, html[data-theme="eva"] #totalTime::before {
+    content: "88:88"; position: absolute; right: 0; top: 0; z-index: -1; color: var(--e-ghost); text-shadow: none;
+  }
+  html[data-theme="eva"] #totalTime { color: var(--e-total); }
+
+  /* ---- CPR cycle ---- */
+  html[data-theme="eva"] #cprH > span:first-child::after { content: "2-MIN CYCLE"; display: block; margin-top: 2px; font: 500 10.5px/1.15 var(--e-cond); letter-spacing: .14em; color: var(--muted); }
+  html[data-theme="eva"] #cycleNo { background: var(--e-amber); color: #000; padding: 3px 7px; font: 800 18px/1 var(--e-ui); white-space: nowrap; }
+  html[data-theme="eva"] .overtime { font-family: var(--e-ui); }
+  html[data-theme="eva"] #cprTime { font-size: 80px; margin: 6px auto; text-align: left; }
+  html[data-theme="eva"] #cprCard[data-state="due"] #cprTime { color: var(--danger); text-shadow: 0 0 10px rgba(255,60,40,.6); }
+  html[data-theme="eva"] #cprCard[data-state="paused"] #cprTime { color: var(--warn); text-shadow: 0 0 10px rgba(255,212,0,.45); }
+  html[data-theme="eva"] #cprCard[data-state="rosc"] #cprTime { color: var(--ok); text-shadow: 0 0 10px rgba(57,255,106,.45); }
+  html[data-theme="eva"] #cprCard[data-state="due"] { box-shadow: 0 0 0 2px rgba(255,77,61,.35) inset; }
+  @keyframes evaPulse { 50% { background: #2a0805; } }
+  html[data-theme="eva"] #cprCard[data-state="due"] { animation-name: evaPulse; }
+  @keyframes evaPulseBtn { 50% { box-shadow: 0 0 0 4px rgba(255,212,0,.55); } }
+  html[data-theme="eva"] #cprCard[data-state="due"] #btnNext { animation-name: evaPulseBtn; }
+  html[data-theme="eva"] #epiCard[data-state="over"] { animation-name: evaPulse; box-shadow: 0 0 0 2px rgba(255,77,61,.35) inset; }
+  html[data-theme="eva"] .bar { position: relative; height: 12px; border-radius: 0; margin: 6px 0; background: var(--e-track); border: 1px solid var(--e-track-b); }
+  html[data-theme="eva"] .bar > div { background: var(--e-amber); }
+  html[data-theme="eva"] .bar::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(90deg, transparent calc(25% - 1px), #000 calc(25% - 1px) calc(25% + 1px), transparent calc(25% + 1px) calc(50% - 1px), #000 calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px) calc(75% - 1px), #000 calc(75% - 1px) calc(75% + 1px), transparent calc(75% + 1px)); }
+  html[data-theme="eva"] .status { text-align: left; font: 700 14px/1.3 var(--e-ui); color: var(--muted); margin: 6px 0 8px; }
+  html[data-theme="eva"] #cprCard[data-state="running"] .status { color: var(--ok); }
+  html[data-theme="eva"] #cprCard[data-state="rosc"] .status { color: var(--ok); }
+  html[data-theme="eva"] .pauseNote { text-align: left; margin: -2px 0 8px; }
+  html[data-theme="eva"] .counters { display: none; }
+  html[data-theme="eva"] .ctrl { gap: 7px; }
+
+  /* ---- buttons ---- */
+  html[data-theme="eva"] .btn { background: #000; color: var(--e-amber); border: 1.5px solid var(--e-amber); border-radius: 0; font-family: var(--e-ui); font-weight: 800; }
+  html[data-theme="eva"] .btn.primary, html[data-theme="eva"] .btn.go { background: var(--e-amber); color: #000; border-color: var(--e-amber); }
+  html[data-theme="eva"] .btn.danger { background: var(--danger); color: #000; border-color: var(--danger); }
+  html[data-theme="eva"] .btn.small { font-weight: 700; }
+  html[data-theme="eva"] .btn:disabled { background: #000; border: 1.5px solid rgba(255,154,31,.35); color: rgba(255,154,31,.35); opacity: 1; filter: none; }
+  html[data-theme="eva"] input[type="text"], html[data-theme="eva"] select { background: #000; color: var(--text); border: 1.5px solid var(--e-track-b); border-radius: 0; }
+  html[data-theme="eva"] input[type="text"]::placeholder { color: #8a5f2e; }
+
+  /* ---- event input ---- */
+  html[data-theme="eva"] #evH { display: none; }
+  html[data-theme="eva"] #evH > span:first-child::after { content: "EVENT INPUT"; display: block; margin-top: 2px; font: 500 10.5px/1.15 var(--e-cond); letter-spacing: .14em; color: var(--muted); }
+  html[data-theme="eva"] .evgrid { grid-template-columns: 1.25fr 1fr 1fr; gap: 7px; }
+  html[data-theme="eva"] .ev { position: relative; min-height: 50px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 0; line-height: 1; overflow: hidden; }
+  html[data-theme="eva"] .ev::before { font: 800 19px/1 var(--e-ui); white-space: nowrap; }
+  html[data-theme="eva"] .ev::after { font: 600 11px/1 var(--e-cond); letter-spacing: .06em; opacity: .95; white-space: nowrap; }
+  html[data-theme="eva"] .ev[data-event="shock"] { grid-area: 1 / 1; min-height: 54px;
+    background: repeating-linear-gradient(-45deg, #FFD400 0 10px, #FFC400 10px 20px);
+    color: #000; border: 3px solid #000; box-shadow: inset 0 0 0 3px #000, 0 0 0 2px #FFD400; }
+  html[data-theme="eva"] .ev[data-event="shock"]::before { content: "電擊"; font: 900 25px/1 var(--e-head); }
+  html[data-theme="eva"] .ev[data-event="shock"]::after { content: "SHOCK"; }
+  html[data-theme="eva"] .ev[data-event="epi"] { grid-area: 1 / 2; }
+  html[data-theme="eva"] .ev[data-event="epi"]::before { content: "Epi"; font-size: 21px; }
+  html[data-theme="eva"] .ev[data-event="epi"]::after { content: "1 mg"; font-size: 12px; }
+  html[data-theme="eva"] .ev[data-event="amio"] { grid-area: 1 / 3; }
+  html[data-theme="eva"] .ev[data-event="amio"]::before { content: "Amio"; font-size: 21px; }
+  html[data-theme="eva"] .ev[data-event="amio"]::after { content: "300/150"; font-size: 12px; }
+  html[data-theme="eva"] .ev[data-event="airway"] { grid-area: 2 / 1; }
+  html[data-theme="eva"] .ev[data-event="airway"]::before { content: "高級呼吸道"; font-size: 17px; }
+  html[data-theme="eva"] .ev[data-event="rosc"], html[data-theme="eva"] .ev[data-event="rearrest"] { grid-area: 2 / 2 / 3 / 4; background: #000; border: 2px solid var(--ok); color: var(--ok); }
+  html[data-theme="eva"] .ev[data-event="rosc"]::before { content: "ROSC"; font-size: 20px; }
+  html[data-theme="eva"] .ev[data-event="rosc"]::after { content: "自發循環恢復"; font: 800 12px/1 var(--e-ui); letter-spacing: .08em; }
+  html[data-theme="eva"] .ev[data-event="rearrest"] { border-color: var(--danger); color: var(--danger); }
+  html[data-theme="eva"] .ev[data-event="rearrest"]::before { content: "再次停止心跳"; font-size: 18px; }
+  html[data-theme="eva"] .ev[data-event="rearrest"]::after { content: "RE-ARREST"; }
+  html[data-theme="eva"] .ev[data-event="rhythm"] { grid-area: 3 / 1 / 4 / 4; min-height: 44px; flex-direction: row; gap: 10px; }
+  html[data-theme="eva"] .ev[data-event="rhythm"]::before { content: "心律檢查"; font-size: 17px; }
+  html[data-theme="eva"] .ev[data-event="rhythm"]::after { content: "RHYTHM CHECK ▸"; font-size: 12px; }
+  html[data-theme="eva"] .ev.logged { font-size: 16px; }
+  html[data-theme="eva"] .ev.logged::before, html[data-theme="eva"] .ev.logged::after { content: none; }
+  /* count badges ×N (elements live in .evgrid, overlaid on the matching button's grid cell) */
+  html[data-theme="eva"] .evgrid > .cnt { display: block; z-index: 1; pointer-events: none; justify-self: end; align-self: start; margin: 4px 4px 0 0;
+    padding: 2px 4px 1px; font: 800 13px/1 var(--e-ui); letter-spacing: .02em; color: var(--e-amber); border: 1.5px solid currentColor; background: rgba(0,0,0,.55); }
+  html[data-theme="eva"] .evgrid > .cnt[data-for="shock"] { grid-area: 1 / 1; margin: 7px 7px 0 0; color: #000; border-color: #000; background: rgba(255,255,255,.35); }
+  html[data-theme="eva"] .evgrid > .cnt[data-for="epi"] { grid-area: 1 / 2; }
+  html[data-theme="eva"] .evgrid > .cnt[data-for="amio"] { grid-area: 1 / 3; }
+  html[data-theme="eva"] .evgrid:has(.cnt[data-for="shock"]:not([hidden])) .ev[data-event="shock"],
+  html[data-theme="eva"] .evgrid:has(.cnt[data-for="epi"]:not([hidden])) .ev[data-event="epi"],
+  html[data-theme="eva"] .evgrid:has(.cnt[data-for="amio"]:not([hidden])) .ev[data-event="amio"] { padding-right: 34px; }
+  html[data-theme="eva"] .evgrid > .cnt[hidden] { display: none; }
+  /* rhythm: always-visible row (mockup) replaces the 心律檢查 button + picker */
+  html[data-theme="eva"] .ev[data-event="rhythm"], html[data-theme="eva"] #rhythmPicker { display: none; }
+  html[data-theme="eva"] .rhyRow { display: grid; grid-template-columns: auto 1.2fr 1fr 1.1fr; gap: 6px; align-items: center; margin-top: 7px; }
+  html[data-theme="eva"] .rhyRow .rl { font: 800 15px/1.1 var(--e-ui); color: var(--e-amber); padding-right: 2px; }
+  html[data-theme="eva"] .rhyRow .rl em { display: block; font: 500 10.5px/1.15 var(--e-cond); letter-spacing: .14em; color: var(--muted); font-style: normal; }
+  html[data-theme="eva"] .rhyRow .rb { min-height: 40px; padding: 4px 2px; font-size: 16px; white-space: nowrap; }
+  html[data-theme="eva"] .rhyRow .rb.on { background: #FFD400; color: #000; border: 2px solid #FFD400; }
+  html[data-theme="eva"] .picker { border: 1px dashed var(--e-amber); border-radius: 0; background: #000; }
+  html[data-theme="eva"] .picker p { color: var(--muted); }
+  html[data-theme="eva"] .picker [data-rhythm^="VF"] { border-color: var(--warn); color: var(--warn); }
+
+  /* ---- Epinephrine: full-width panel, big 7-seg, status at right, full-width scale ---- */
+  html[data-theme="eva"] #epiCard { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; }
+  html[data-theme="eva"] #epiCard h2 { grid-column: 1 / -1; display: block; margin-bottom: 0; }
+  html[data-theme="eva"] #epiH .subNote { margin-left: 6px; font-size: 11px; font-weight: 500; }
+  html[data-theme="eva"] .epiTop { display: contents; }
+  html[data-theme="eva"] #epiCount { display: none; }
+  html[data-theme="eva"] #epiTime { grid-column: 1; font-size: 54px; margin: 6px 0 7px; }
+  html[data-theme="eva"] #epiStatus { grid-column: 2; grid-row: 2; justify-self: end; text-align: right; margin: 0; font: 800 14px/1.3 var(--e-ui); color: var(--text); }
+  html[data-theme="eva"] #epiStatus .es1, html[data-theme="eva"] #epiStatus .es2 { display: block; white-space: nowrap; }
+  html[data-theme="eva"] #epiStatus .es2 { margin-top: 3px; }
+  html[data-theme="eva"] #epiStatus .esSep { display: none; }
+  html[data-theme="eva"] #epiCard[data-state="window"] #epiStatus { color: var(--ok); }
+  html[data-theme="eva"] #epiCard[data-state="remind"] #epiStatus { color: var(--warn); }
+  html[data-theme="eva"] #epiCard[data-state="over"] #epiStatus { color: var(--danger); }
+  html[data-theme="eva"] #epiCard[data-state="none"] #epiStatus { color: var(--muted); }
+  html[data-theme="eva"] #epiCard[data-state="over"] #epiTime { text-shadow: 0 0 10px rgba(255,60,40,.6); }
+  html[data-theme="eva"] #epiCard .scale, html[data-theme="eva"] #epiCard .ticks { grid-column: 1 / -1; }
+  html[data-theme="eva"] .scale { height: 11px; margin: 4px 0 3px; border-radius: 0; overflow: visible; background: var(--e-track); border: 1px solid var(--e-track-b); }
+  html[data-theme="eva"] .scale .win { background: var(--e-window); }
+  html[data-theme="eva"] .scale .mark { top: -4px; bottom: -4px; background: var(--warn); }
+  html[data-theme="eva"] .scale .cursor { top: -5px; bottom: -5px; background: var(--text); border-radius: 0; }
+  html[data-theme="eva"] .ticks { font: 600 10.5px/1 var(--e-cond); color: var(--muted); }
+  /* end labels pulled inward: "0" left-aligned, "6分" right-aligned to the scale (was half outside the card) */
+  html[data-theme="eva"] .ticks span:first-child { transform: none; }
+  html[data-theme="eva"] .ticks span:last-child { transform: translateX(-100%); white-space: nowrap; }
+  html[data-theme="eva"] .ticks small { position: static; padding-left: 2px; }
+
+  /* ---- H's & T's: collapsed = one line + checked chips; iPad = expanded list ---- */
+  html[data-theme="eva"] #htCard summary { display: flex; align-items: baseline; gap: 8px; font-size: 0; color: var(--e-amber); }
+  html[data-theme="eva"] #htCard summary::before { content: "H's & T's"; font: 800 16px/1.15 var(--e-ui); color: var(--e-amber); }
+  html[data-theme="eva"] #htCard summary::after { content: "可逆病因 ▾"; order: 3; margin-left: auto; font: 500 12px/1 var(--e-ui); letter-spacing: .08em; color: var(--muted); }
+  html[data-theme="eva"] #htCard[open] summary::after { content: "可逆病因 ▴"; }
+  html[data-theme="eva"] #htCount { font: 800 15px/1 var(--e-ui); color: var(--text); }
+  html[data-theme="eva"] #htCard:not([open])::details-content { content-visibility: visible; display: block; }
+  html[data-theme="eva"] #htCard:not([open]) .htList { display: flex; flex-wrap: wrap; gap: 5px; pointer-events: none; }
+  html[data-theme="eva"] #htCard:not([open]):has(input:checked) .htList { margin-top: 7px; }
+  html[data-theme="eva"] #htCard:not([open]) .htList label { display: none; }
+  html[data-theme="eva"] #htCard:not([open]) .htList label:has(input:checked) { display: flex; gap: 6px; padding: 4px 7px; font: 700 12.5px/1.1 var(--e-ui); border: 1px solid var(--ok); color: var(--text); }
+  html[data-theme="eva"] #htCard:not([open]) .htList input { width: 12px; height: 12px; }
+  html[data-theme="eva"] .htList label { border: 1px solid var(--e-track-b); color: var(--muted); font-weight: 700; padding: 6px 8px; }
+  html[data-theme="eva"] .htList label:has(input:checked) { border-color: var(--ok); color: var(--text); }
+  html[data-theme="eva"] .htList { gap: 5px; }
+  html[data-theme="eva"] #htCard[open] .htList { margin-top: 8px; }
+
+  /* ---- log ---- */
+  html[data-theme="eva"] #logH > span:first-child::after { content: "LOG · 最新在上"; display: block; margin-top: 2px; font: 500 10.5px/1.15 var(--e-cond); letter-spacing: .14em; color: var(--muted); }
+  html[data-theme="eva"] .logMeta { color: var(--muted); }
+  html[data-theme="eva"] .logHead { margin-bottom: 4px; justify-content: flex-end; }
+  html[data-theme="eva"] .msg { color: var(--ok); }
+  html[data-theme="eva"] ol.log { height: auto; max-height: 100px; gap: 0; }
+  html[data-theme="eva"] .log li { grid-template-columns: 62px 1fr; gap: 6px; padding: 3px 0; border-bottom: 0; border-top: 1px solid var(--e-rule); font: 700 14px/1.25 var(--e-ui); align-items: baseline; }
+  html[data-theme="eva"] .log .tag, html[data-theme="eva"] .log .wall { display: none; }
+  html[data-theme="eva"] .log .rel { font: 700 13px/1.35 var(--e-seg); color: var(--e-amber); white-space: nowrap; }
+  html[data-theme="eva"] .log .text { color: var(--text); }
+  html[data-theme="eva"] .log li.kind-timer .text { color: var(--muted); }
+  html[data-theme="eva"] .log li.kind-alert .text { color: var(--warn); }
+  html[data-theme="eva"] .log li.kind-undo .text { color: var(--muted); }
+  html[data-theme="eva"] .log li.voided .text { color: var(--muted); }
+  html[data-theme="eva"] .log li[data-ev="shock"]:not(.voided) .text, html[data-theme="eva"] .log li[data-ev="shock"]:not(.voided) .rel { color: #FFD400; }
+  /* fade at the bottom of the (scrollable) log: hints that there is more below; padding lets the last row scroll clear of it */
+  html[data-theme="eva"] ol.log { padding-bottom: 18px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+            mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }
+
+  /* ---- alerts / banners / settings ---- */
+  html[data-theme="eva"] .alertBar { background: #000; }
+  html[data-theme="eva"] .alertBar .al { border-radius: 0; font-family: var(--e-ui); }
+  html[data-theme="eva"] .alertBar .al.danger { background: #1a0503; border-color: var(--danger); color: var(--danger); }
+  html[data-theme="eva"] .alertBar .al.warn { background: #1a1400; border-color: var(--warn); color: var(--warn); }
+  html[data-theme="eva"] .banner { border-radius: 0; }
+  html[data-theme="eva"] .banner.info { background: #0E0700; border: 1px solid var(--e-track-b); color: var(--text); }
+  html[data-theme="eva"] .banner.demo { background: #120c00; border: 1px solid var(--warn); color: var(--warn); }
+  html[data-theme="eva"] details.setCard summary { color: var(--e-amber); font-weight: 800; }
+  html[data-theme="eva"] .settings label { color: var(--muted); }
+  html[data-theme="eva"] footer { color: var(--muted); }
+  html[data-theme="eva"] footer a { color: var(--e-amber); }
+
+  /* ---- iPad landscape / desktop (≥1000px): 2 columns ---- */
+  @media (min-width: 1000px) {
+    /* one screen when it fits; if alerts/banners make it too tall, the page scrolls instead of clipping */
+    html[data-theme="eva"], html[data-theme="eva"] body { height: 100%; overflow: hidden auto; }
+    html[data-theme="eva"] main { --e-b1: 0px; --e-b2: 0px; --e-al: 0px; --e-x: calc(var(--e-b1) + var(--e-b2) + var(--e-al)); }
+    html[data-theme="eva"] main:has(#restoreBanner:not([hidden])) { --e-b1: 46px; }
+    html[data-theme="eva"] main:has(#speedBadge:not([hidden])) { --e-b2: 46px; }
+    html[data-theme="eva"] main:has(#alertBar:not([hidden]) .al) { --e-al: 56px; }
+    html[data-theme="eva"] main:has(#alertBar:not([hidden]) .al + .al) { --e-al: 108px; }
+    html[data-theme="eva"] main:has(#alertBar:not([hidden]) .al + .al + .al) { --e-al: 160px; }
+    html[data-theme="eva"] body { padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 18px)
+                                         calc(env(safe-area-inset-bottom) + 10px) calc(env(safe-area-inset-left) + 18px); }
+    html[data-theme="eva"] main { max-width: none; height: 100%; gap: 0; row-gap: 0; column-gap: 16px;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto; }
+    html[data-theme="eva"] header { grid-area: 1 / 1 / 2 / -1; margin-bottom: 10px; display: flex; align-items: flex-end; gap: 18px; padding-right: 290px; min-height: 100px; }
+    html[data-theme="eva"] .alertBar { grid-area: 2 / 1 / 3 / -1; margin-bottom: 10px; }
+    html[data-theme="eva"] #restoreBanner { grid-area: 3 / 1 / 4 / -1; margin-bottom: 10px; }
+    html[data-theme="eva"] #speedBadge { grid-area: 4 / 1 / 5 / -1; margin-bottom: 10px; }
+    html[data-theme="eva"] #cprCard { grid-area: 5 / 1; margin-bottom: 10px; }
+    html[data-theme="eva"] [aria-labelledby="evH"] { grid-area: 5 / 2; margin-bottom: 10px; }
+    html[data-theme="eva"] #epiCard { grid-area: 6 / 1; margin-bottom: 10px; }
+    html[data-theme="eva"] #htCard { grid-area: 7 / 1 / 9 / 2; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+    html[data-theme="eva"] .logCard { grid-area: 6 / 2 / 8 / 3; margin-bottom: 10px; min-height: 0; display: flex; flex-direction: column; }
+    html[data-theme="eva"] details.setCard:not(#htCard) { grid-area: 8 / 2; max-height: 40vh; overflow: auto; }
+    html[data-theme="eva"] h1 { margin: 0; min-height: 0; }
+    html[data-theme="eva"] h1::before { font-size: 44px; }
+    html[data-theme="eva"] h1::after { font-size: 15px; }
+    html[data-theme="eva"] .chips { margin: 0 0 2px; }
+    html[data-theme="eva"] .chip { font-size: 13px; padding: 6px 10px; }
+    html[data-theme="eva"] .logHead .total { top: 0; font-size: 16px; }
+    html[data-theme="eva"] .logHead .total::after { font-size: 12px; }
+    html[data-theme="eva"] .logHead .total b { font-size: 56px; margin-top: 4px; }
+    html[data-theme="eva"] .card { padding: 12px 18px 14px; }
+    html[data-theme="eva"] .card h2 { font-size: 22px; }
+    html[data-theme="eva"] #cprH > span:first-child::after, html[data-theme="eva"] #evH > span:first-child::after,
+    html[data-theme="eva"] #logH > span:first-child::after { font-size: 12px; }
+    html[data-theme="eva"] #cycleNo { font-size: 24px; }
+    html[data-theme="eva"] #cprTime { font-size: clamp(72px, calc(100vh - 640px - var(--e-x)), 166px); margin: 4px auto; }
+    html[data-theme="eva"] .bar { height: 18px; }
+    html[data-theme="eva"] .status { font-size: 18px; }
+    html[data-theme="eva"] #evH { display: flex; margin-bottom: 10px; }
+    html[data-theme="eva"] .evgrid { gap: 10px; }
+    html[data-theme="eva"] .ev { min-height: clamp(50px, calc(100vh - 760px - var(--e-x)), 76px); }
+    html[data-theme="eva"] .ev[data-event="shock"], html[data-theme="eva"] .ev[data-event="epi"], html[data-theme="eva"] .ev[data-event="amio"] { min-height: clamp(62px, calc(100vh - 720px - var(--e-x)), 100px); }
+    html[data-theme="eva"] .rhyRow { gap: 10px; margin-top: 10px; }
+    html[data-theme="eva"] .rhyRow .rl { font-size: 20px; }
+    html[data-theme="eva"] .rhyRow .rl em { font-size: 12px; }
+    html[data-theme="eva"] .rhyRow .rb { min-height: clamp(48px, calc(100vh - 770px - var(--e-x)), 72px); font-size: clamp(20px, 1.9vw, 26px); }
+    html[data-theme="eva"] .ev::before { font-size: 26px; }
+    html[data-theme="eva"] .ev::after { font-size: 14px; }
+    html[data-theme="eva"] .ev[data-event="shock"]::before { font-size: 34px; }
+    html[data-theme="eva"] .ev[data-event="epi"]::before, html[data-theme="eva"] .ev[data-event="amio"]::before { font-size: clamp(24px, 2.2vw, 30px); }
+    html[data-theme="eva"] .ev[data-event="airway"]::before { font-size: 24px; }
+    html[data-theme="eva"] .ev[data-event="rosc"]::after { font-size: 15px; }
+    html[data-theme="eva"] .ev[data-event="rhythm"]::before { font-size: 22px; }
+    html[data-theme="eva"] .evgrid > .cnt { font-size: 20px; padding: 3px 7px 2px; margin: 8px 8px 0 0; }
+    html[data-theme="eva"] .evgrid > .cnt[data-for="shock"] { margin: 9px 9px 0 0; }
+    html[data-theme="eva"] .evgrid:has(.cnt[data-for="shock"]:not([hidden])) .ev[data-event="shock"],
+    html[data-theme="eva"] .evgrid:has(.cnt[data-for="epi"]:not([hidden])) .ev[data-event="epi"],
+    html[data-theme="eva"] .evgrid:has(.cnt[data-for="amio"]:not([hidden])) .ev[data-event="amio"] { padding-right: 44px; }
+    html[data-theme="eva"] #epiCard { position: relative; top: auto; z-index: auto; }
+    html[data-theme="eva"] #epiH .subNote { display: block; margin: 2px 0 0; font-size: 12px; }
+    html[data-theme="eva"] #epiTime { font-size: clamp(56px, calc(100vh - 760px - var(--e-x)), 96px); margin: 6px 0 8px; }
+    html[data-theme="eva"] #epiStatus { font-size: 20px; }
+    html[data-theme="eva"] .scale { height: 16px; }
+    html[data-theme="eva"] .ticks { font-size: 13px; }
+    html[data-theme="eva"] #htCard summary::before { font-size: 22px; }
+    html[data-theme="eva"] #htCount { font-size: 20px; }
+    html[data-theme="eva"] .logCard ol.log { flex: 1 1 auto; height: auto; max-height: none; min-height: 0; }
+    html[data-theme="eva"] .log li { font-size: 18px; grid-template-columns: 84px 1fr; padding: 6px 0; }
+    html[data-theme="eva"] .log .rel { font-size: 17px; }
+    html[data-theme="eva"] #htCard[open] .htList { display: grid; grid-template-columns: 1fr 1fr; }
+    html[data-theme="eva"] #htCard[open] .htList label { padding: 4px 10px; font-size: 16px; }
+  }
+  /* tall iPad / desktop: H's & T's always expanded (as in the mockup); shorter screens keep the one-line summary */
+  @media (min-width: 1000px) and (min-height: 900px) {
+    html[data-theme="eva"] #htCard::details-content { content-visibility: visible; display: block; }
+    html[data-theme="eva"] #htCard .htList, html[data-theme="eva"] #htCard:not([open]) .htList { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; pointer-events: auto; }
+    html[data-theme="eva"] #htCard .htList label, html[data-theme="eva"] #htCard:not([open]) .htList label { display: flex; gap: 8px; padding: 4px 10px; font: 700 16px/1.2 var(--e-ui); }
+    html[data-theme="eva"] #htCard .htList input { width: 16px; height: 16px; }
+    html[data-theme="eva"] #htCard summary::after { content: "可逆病因"; }
+    html[data-theme="eva"] #htCard:not([open]) .htList label:has(input:checked) { padding: 4px 10px; font-size: 16px; }
+  }
+  /* EVA：單色 SVG 圖示取代 emoji（Dr. Canvas 繪製，currentColor 跟著文字變色） */
+  html[data-theme="eva"] :is(#soundBtn, #metroBtn, #wakeChip, #btnStart, #btnPause, #btnNext, #btnReset, #btnUndo, details.setCard:not(#htCard) > summary, #epiCard[data-state="before"] #epiStatus .es1)::before { content: ""; display: inline-block; width: 1em; height: 1em; margin-right: .4em; vertical-align: -.14em; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+  html[data-theme="eva"] #soundBtn { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M4 9h4l5-4v14l-5-4H4z%22/%3E%3Cpath d=%22M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #metroBtn { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M8 3.5h8l3.5 17h-15z%22/%3E%3Cpath d=%22M12 16l5-10%22/%3E%3Cpath d=%22M6 16.5h12%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #wakeChip { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Crect x=%227.5%22 y=%223%22 width=%229%22 height=%2218%22/%3E%3Cpath d=%22M11 17.5h2%22/%3E%3Cpath d=%22M2.5 9v6M21.5 9v6M4.8 7v10M19.2 7v10%22 stroke-width=%221.6%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #btnStart { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M7 4.5v15l12-7.5z%22 fill=%22%23000%22 stroke=%22none%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #btnPause { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Crect x=%225.5%22 y=%224.5%22 width=%224.5%22 height=%2215%22 fill=%22%23000%22 stroke=%22none%22/%3E%3Crect x=%2214%22 y=%224.5%22 width=%224.5%22 height=%2215%22 fill=%22%23000%22 stroke=%22none%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #btnNext { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M3.5 5v14l8-7z M11.5 5v14l8-7z%22 fill=%22%23000%22 stroke=%22none%22/%3E%3Crect x=%2219.5%22 y=%225%22 width=%222%22 height=%2214%22 fill=%22%23000%22 stroke=%22none%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #btnReset { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M5 12a7 7 0 1 0 2.2-5.1%22/%3E%3Cpath d=%22M4 3.5v5h5%22 /%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #btnUndo { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M9 5L4 10l5 5%22/%3E%3Cpath d=%22M4 10h10a6 6 0 0 1 0 12h-3%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] details.setCard:not(#htCard) > summary { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%226%22/%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%222.2%22/%3E%3Cpath d=%22M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5M5.3 5.3l2.5 2.5M16.2 16.2l2.5 2.5M5.3 18.7l2.5-2.5M16.2 7.8l2.5-2.5%22 stroke-width=%223.2%22 stroke-linecap=%22butt%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] #epiCard[data-state="before"] #epiStatus .es1 { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M6 3h12M6 21h12%22/%3E%3Cpath d=%22M7.5 3v3l4.5 6-4.5 6v3M16.5 3v3L12 12l4.5 6v3%22/%3E%3C/svg%3E"); }
+  html[data-theme="eva"] .htList input { -webkit-appearance: none; appearance: none; margin: 0; color: inherit; border: 1.5px solid currentColor; background: #000; display: inline-grid; }
+  html[data-theme="eva"] .htList input:checked { border-color: var(--ok); }
+  html[data-theme="eva"] .htList input:checked::before { content: ""; width: 100%; height: 100%; background: var(--ok); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M5 12.5l4.5 4.5L19 7.5%22/%3E%3C/svg%3E") center / 85% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M5 12.5l4.5 4.5L19 7.5%22/%3E%3C/svg%3E") center / 85% no-repeat; }
 </style>
 </head>
 <body>
@@ -274,6 +627,7 @@
       <button class="btn ev" data-event="airway">高級呼吸道</button>
       <button class="btn ev" data-event="rosc">❤ ROSC</button>
       <button class="btn ev" data-event="rearrest" hidden>💔 再次停止心跳</button>
+      <b class="cnt" id="cntShock" data-for="shock" aria-hidden="true" hidden></b><b class="cnt" id="cntEpi" data-for="epi" aria-hidden="true" hidden></b><b class="cnt" id="cntAmio" data-for="amio" aria-hidden="true" hidden></b>
     </div>
     <div class="picker" id="rhythmPicker" hidden>
       <p>選擇心律（會記錄在 log）</p>
@@ -283,6 +637,12 @@
         <button class="btn small" data-rhythm="Asystole（不可電擊）">Asystole</button>
       </div>
       <div class="row" style="margin-top:8px"><button class="btn small" id="rhythmCancel">取消</button></div>
+    </div>
+    <div class="rhyRow" id="rhyRow" role="group" aria-label="心律檢查">
+      <span class="rl">心律<em>RHYTHM</em></span>
+      <button class="btn rb" data-rhy="VF/pVT（可電擊）" aria-pressed="false">VF / pVT</button>
+      <button class="btn rb" data-rhy="PEA（不可電擊）" aria-pressed="false">PEA</button>
+      <button class="btn rb" data-rhy="Asystole（不可電擊）" aria-pressed="false">Asystole</button>
     </div>
     <div class="evFoot">
     <form class="noteRow" id="noteForm">
@@ -354,6 +714,12 @@
           <option value="10">10×</option>
           <option value="30">30×</option>
           <option value="60">60×</option>
+        </select>
+      </label>
+      <label>介面主題
+        <select id="themeSel">
+          <option value="orig" selected>原版</option>
+          <option value="eva">EVA 終端機</option>
         </select>
       </label>
     </div>
@@ -435,7 +801,36 @@
   }
   function fmtWall(ms) { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
   function fmtDate(ms) { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
-  function setText(node, text) { if (node.textContent !== text) node.textContent = text; }
+  // EVA 主題：彩色 emoji 與終端機風格不搭，顯示時拿掉（原字串存在文字節點 _o，切回原版時還原）
+  const EMOJI = /[\u{1F300}-\u{1FAFF}\u23E9-\u23F3\u23F8-\u23FA\u2699\u26A1\u2764\u2B50\u25B6\u21BA\u21B6]\uFE0F?\s?/gu;
+  const isEva = () => document.documentElement.getAttribute('data-theme') === 'eva';
+  const evaView = (t) => isEva() ? t.replace(EMOJI, '') : t;
+  function textNodes(root) {
+    const out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => /^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName) ? 2 : 1 });
+    if (root.nodeType === 3) return [root];
+    while (w.nextNode()) out.push(w.currentNode);
+    return out;
+  }
+  function stripEmoji(root) {
+    if (!isEva()) return;
+    for (const n of textNodes(root)) { const v = n.data.replace(EMOJI, ''); if (v !== n.data) { n._o = n.data; n.data = v; } }
+  }
+  function restoreEmoji() {
+    for (const n of textNodes(document.body)) if (n._o !== undefined) { if (n.data === n._o.replace(EMOJI, '')) n.data = n._o; delete n._o; }
+  }
+  new MutationObserver((ms) => { for (const m of ms) { if (m.type === 'characterData') stripEmoji(m.target); else m.addedNodes.forEach(stripEmoji); } })
+    .observe(document.body, { subtree: true, childList: true, characterData: true });
+  stripEmoji(document.body);
+  function setText(node, text) { if (node.textContent !== evaView(text)) node.textContent = text; }
+  // Epinephrine 狀態：分成「狀態」與「倒數/補充」兩個 span（原版仍是同一行同樣文字；EVA 主題分兩行）
+  function setStatus(node, msg) {
+    if (node.textContent === msg) return;
+    let sep = '；', i = msg.indexOf(sep);
+    if (i < 0) { sep = ''; i = msg.indexOf('（'); if (i < 0) { i = msg.indexOf('」'); if (i >= 0) i += 1; } }
+    if (i <= 0 || i >= msg.length) { node.textContent = msg; return; }
+    const part = (cls, text) => { const e = document.createElement('span'); e.className = cls; e.textContent = text; return e; };
+    node.replaceChildren(part('es1', msg.slice(0, i)), part('esSep', sep), part('es2', msg.slice(i + sep.length)));
+  }
   const remindLabel = () => fmtDur(S.epiRemindMs, false).replace(/^0/, '');
 
   // ---------- sound / vibration ----------
@@ -544,9 +939,11 @@
   // ---------- log ----------
   const KIND_LABEL = { event: '事件', timer: '計時', alert: '提醒', undo: '撤銷' };
   function relOf(t) { return S.t0 === null || t < S.t0 ? 'CPR 前' : '+' + fmtDur(t - S.t0, false); }
-  function addLog(kind, text, at) {
+  function addLog(kind, text, at, evKey) {
     const t = typeof at === 'number' ? at : now();
     const entry = { id: S.nextId++, t, kind, text, voided: false };
+    if (evKey) entry.ev = evKey; // 事件類型（shock/epi/rhythm…），只供顯示用；舊紀錄沒有此欄位
+
     S.log.push(entry);
     return entry.id;
   }
@@ -560,6 +957,8 @@
     for (const e of entries) {
       const li = document.createElement('li');
       li.className = 'kind-' + e.kind + (e.voided ? ' voided' : '');
+      const evk = e.ev || (e.kind === 'event' && /^電擊（/.test(e.text) ? 'shock' : ''); // 舊紀錄：依文字判斷
+      if (evk) li.dataset.ev = evk;
       const rel = document.createElement('span');
       rel.className = 'rel';
       rel.textContent = relOf(e.t);
@@ -726,7 +1125,7 @@
     } else if (key === 'note') {
       text = extra;
     } else return;
-    const id = addLog('event', text, t);
+    const id = addLog('event', text, t, key);
     pushUndo(text, before, [id], cyc);
     flash(btn);
     requestWake();
@@ -763,7 +1162,7 @@
       idle: S.cycle ? '● 已重置：按「開始」' : '● 準備就緒：按「開始 CPR」同時開始計時與紀錄',
       running: '▶ CPR 進行中' + (S.metroOn && (!audioCtx || audioCtx.state !== 'running') ? '（點一下畫面以啟用節拍聲）' : ''),
       paused: S.due ? '⏸ 超時中已暫停：按「繼續」接續，或按「下一輪」' : '⏸ 已暫停：按「繼續」',
-      due: '⚠ 2 分鐘到：檢查心律 / 換手，然後按「下一輪」',
+      due: '⚠ 2 分鐘到：檢查心律 / 換手',
       rosc: '❤ 已記錄 ROSC：CPR 週期、節拍與提醒已停止（再停止心跳請按「💔 再次停止心跳」）',
     }[st]);
     setText($('btnStart'), S.cycle === 0 ? '▶ 開始 CPR' : '▶ 繼續');
@@ -776,9 +1175,24 @@
     document.querySelector('.ev[data-event="rosc"]').hidden = rosc;
     document.querySelector('.ev[data-event="rearrest"]').hidden = !rosc;
 
+    // 心律列（EVA）：S.ev.rhythm 仍有效時，標示最近一次（未撤銷）心律檢查所選的選項
+    let rhyOpt = null;
+    if (S.ev.rhythm !== null) {
+      for (let i = S.log.length - 1; i >= 0; i--) {
+        const e = S.log[i];
+        if (e.voided || e.kind !== 'event') continue;
+        if (e.ev === 'rhythm' || (!e.ev && e.text.startsWith('心律檢查：'))) { rhyOpt = e.text.slice('心律檢查：'.length); break; }
+      }
+    }
+    document.querySelectorAll('#rhyRow [data-rhy]').forEach((b) => {
+      const on = b.dataset.rhy === rhyOpt;
+      if (b.classList.contains('on') !== on) { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
+    });
+
     setText($('cShock'), String(S.ev.shock));
     setText($('cEpi'), String(S.ev.epi));
     setText($('cAmio'), String(S.ev.amio));
+    for (const [id, n] of [['cntShock', S.ev.shock], ['cntEpi', S.ev.epi], ['cntAmio', S.ev.amio]]) { setText($(id), n ? '×' + n : ''); $(id).hidden = !n; }
     document.querySelectorAll('#htList input').forEach((cb) => { cb.checked = S.ev.ht.includes(cb.value); });
     setText($('htCount'), S.ev.ht.length ? `（已勾 ${S.ev.ht.length}/${HT_ITEMS.length}）` : '');
 
@@ -794,7 +1208,7 @@
       setText($('epiTime'), '--:--');
       setText($('epiCount'), '尚未記錄');
       $('epiCursor').hidden = true;
-      setText($('epiStatus'), '按「Epinephrine」後開始計時');
+      setStatus($('epiStatus'), '按「Epinephrine」後開始計時');
     } else {
       const since = t - S.ev.epiAt;
       setText($('epiTime'), fmtDur(since, false));
@@ -807,7 +1221,7 @@
       else if (since >= EPI_WIN_START) { es = 'window'; msg = `● 已進入 3–5 分鐘區間；${fmtDur(S.epiRemindMs - since, true)} 後提醒`; }
       else { es = 'before'; msg = `⏳ 未到 3 分鐘；${fmtDur(EPI_WIN_START - since, true)} 後進入區間`; }
       epiCard.dataset.state = es;
-      setText($('epiStatus'), msg);
+      setStatus($('epiStatus'), msg);
     }
     renderAlerts(t);
     setText($('totalTime'), S.t0 === null ? '--:--' : fmtDur(Math.max(0, t - S.t0), false));
@@ -967,6 +1381,10 @@
     });
   });
   $('rhythmCancel').addEventListener('click', () => { picker.hidden = true; });
+  // 心律列（EVA）：直接觸發選單裡同一個選項 → 同一段程式（紀錄、提示、撤銷完全相同）
+  document.querySelectorAll('#rhyRow [data-rhy]').forEach((b) => {
+    b.addEventListener('click', () => { const opt = [...picker.querySelectorAll('[data-rhythm]')].find((x) => x.dataset.rhythm === b.dataset.rhy); if (opt) opt.click(); });
+  });
 
   $('noteForm').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -1011,6 +1429,15 @@
     renderMetro();
     save();
     metroPump();
+  });
+  // 介面主題（只改外觀；<head> 的小 script 在首次繪製前套用）
+  $('themeSel').value = document.documentElement.getAttribute('data-theme') === 'eva' ? 'eva' : 'orig';
+  $('themeSel').addEventListener('change', () => {
+    const eva = $('themeSel').value === 'eva';
+    if (eva) document.documentElement.setAttribute('data-theme', 'eva'); else document.documentElement.removeAttribute('data-theme');
+    document.querySelector('meta[name="theme-color"]').content = eva ? '#000000' : '#0a0d12';
+    try { localStorage.setItem('cprTimer.theme', eva ? 'eva' : 'orig'); } catch (_) {}
+    if (eva) stripEmoji(document.body); else restoreEmoji();
   });
   function renderSound() {
     const b = $('soundBtn');

@@ -1,6 +1,7 @@
 // 離線快取：頁面先抓網路（拿到新版就更新快取），沒網路時用快取；圖示等其他檔案先用快取
-const CACHE = 'cpr-timer-v2';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+const CACHE = 'cpr-timer-v4';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png',
+  './fonts/DSEG7Classic-Bold.woff2', './fonts/Antonio-subset.woff2', './fonts/NotoSerifTC-900-subset.woff2'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
