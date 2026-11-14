@@ -79,6 +79,9 @@
   .ev[data-event="amio"] { border-color: #20555c; color: var(--amio); }
   .ev[data-event="rosc"] { border-color: #1e5a40; color: var(--ok); }
   .ev[data-event="rearrest"] { border-color: #6b1e1e; color: var(--danger); }
+  /* Amiodarone 已給滿建議兩劑：按鈕變警示框（仍可按） */
+  .ev[data-event="amio"].maxed { border: 2px solid var(--danger); color: var(--danger); background: rgba(255,93,93,.12); }
+  .ev[data-event="amio"].maxed:not(.logged)::after { content: "已達建議 2 劑"; display: block; font-size: 12px; font-weight: 700; margin-top: 2px; }
   .ev.logged { background: var(--ok) !important; color: #04170e !important; border-color: var(--ok) !important; }
   .picker { margin-top: 8px; padding: 10px; border: 1px dashed var(--line); border-radius: 10px; background: var(--card2); }
   .picker p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
@@ -377,6 +380,9 @@
   html[data-theme="eva"] .ev[data-event="rhythm"] { grid-area: 3 / 1 / 4 / 4; min-height: 44px; flex-direction: row; gap: 10px; }
   html[data-theme="eva"] .ev[data-event="rhythm"]::before { content: "心律檢查"; font-size: 17px; }
   html[data-theme="eva"] .ev[data-event="rhythm"]::after { content: "RHYTHM CHECK ▸"; font-size: 12px; }
+  html[data-theme="eva"] .ev[data-event="amio"].maxed { border: 2px solid var(--danger); color: var(--danger); background: repeating-linear-gradient(-45deg, rgba(255,77,61,.16) 0 8px, rgba(255,77,61,.05) 8px 16px); box-shadow: inset 0 0 0 1px var(--danger); }
+  html[data-theme="eva"] .ev[data-event="amio"].maxed:not(.logged)::after { content: "已達 2 劑"; display: block; margin-top: 0; font: 800 12px/1 var(--e-ui); letter-spacing: .02em; }
+  html[data-theme="eva"] .evgrid:has(.ev[data-event="amio"].maxed) > .cnt[data-for="amio"] { color: var(--danger); }
   html[data-theme="eva"] .ev.logged { font-size: 16px; }
   html[data-theme="eva"] .ev.logged::before, html[data-theme="eva"] .ev.logged::after { content: none; }
   /* count badges ×N (elements live in .evgrid, overlaid on the matching button's grid cell) */
@@ -572,17 +578,13 @@
     html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) #htCard { min-height: min-content; }
     html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) details.setCard:not(#htCard) { max-height: none; }
   }
-  /* EVA 寬螢幕：H's & T's 或設定打開時（高螢幕上 H's & T's 永遠展開），卡片往下撐開、整頁捲動，不再卡在小格子裡捲 */
+  /* EVA 寬螢幕：H's & T's 和設定永遠不被壓扁裁切；放不下時整頁往下捲（打開時往下撐開），紀錄在自己的格子裡捲 */
   @media (min-width: 1000px) {
-    html[data-theme="eva"] main:has(#htCard[open], details.setCard:not(#htCard)[open]) { height: auto; min-height: 100%; }
-    html[data-theme="eva"] main:has(#htCard[open], details.setCard:not(#htCard)[open]) .logCard ol.log { min-height: 220px; max-height: 50vh; }
-    html[data-theme="eva"] main:has(#htCard[open], details.setCard:not(#htCard)[open]) #htCard { align-self: start; }
-    html[data-theme="eva"] #htCard[open], html[data-theme="eva"] details.setCard:not(#htCard)[open] { min-height: min-content; max-height: none; overflow: visible; }
-  }
-  @media (min-width: 1000px) and (min-height: 900px) {
-    html[data-theme="eva"] main { height: auto; min-height: 100%; }
-    html[data-theme="eva"] .logCard ol.log { min-height: 220px; max-height: 50vh; }
-    html[data-theme="eva"] #htCard { min-height: min-content; overflow: visible; align-self: start; }
+    html[data-theme="eva"], html[data-theme="eva"] body { height: auto; overflow: visible; }
+    html[data-theme="eva"] body { min-height: 100vh; min-height: 100dvh; background-attachment: scroll; }
+    html[data-theme="eva"] main { height: auto; min-height: calc(100dvh - 18px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+    html[data-theme="eva"] #htCard, html[data-theme="eva"] details.setCard:not(#htCard) { min-height: min-content; max-height: none; overflow: visible; align-self: start; }
+    html[data-theme="eva"] .logCard ol.log { contain: size; min-height: 96px; max-height: none; }
   }
   /* EVA：單色 SVG 圖示取代 emoji（Dr. Canvas 繪製，currentColor 跟著文字變色） */
   html[data-theme="eva"] :is(#soundBtn, #metroBtn, #wakeChip, #btnStart, #btnPause, #btnNext, #btnReset, #btnUndo, details.setCard:not(#htCard) > summary, #epiCard[data-state="before"] #epiStatus .es1)::before { content: ""; display: inline-block; width: 1em; height: 1em; margin-right: .4em; vertical-align: -.14em; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
@@ -1219,6 +1221,9 @@
     setText($('cEpi'), String(S.ev.epi));
     setText($('cAmio'), String(S.ev.amio));
     for (const [id, n] of [['cntShock', S.ev.shock], ['cntEpi', S.ev.epi], ['cntAmio', S.ev.amio]]) { setText($(id), n ? '×' + n : ''); $(id).hidden = !n; }
+    const amioBtn = document.querySelector('.ev[data-event="amio"]');
+    const amioMax = S.ev.amio >= 2;
+    if (amioBtn.classList.contains('maxed') !== amioMax) { amioBtn.classList.toggle('maxed', amioMax); amioBtn.title = amioMax ? '已給兩劑 Amiodarone（建議上限），仍可再記錄' : ''; }
     document.querySelectorAll('#htList input').forEach((cb) => { cb.checked = S.ev.ht.includes(cb.value); });
     setText($('htCount'), S.ev.ht.length ? `（已勾 ${S.ev.ht.length}/${HT_ITEMS.length}）` : '');
 
