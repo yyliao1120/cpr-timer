@@ -572,6 +572,18 @@
     html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) #htCard { min-height: min-content; }
     html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) details.setCard:not(#htCard) { max-height: none; }
   }
+  /* EVA 寬螢幕：H's & T's 或設定打開時（高螢幕上 H's & T's 永遠展開），卡片往下撐開、整頁捲動，不再卡在小格子裡捲 */
+  @media (min-width: 1000px) {
+    html[data-theme="eva"] main:has(#htCard[open], details.setCard:not(#htCard)[open]) { height: auto; min-height: 100%; }
+    html[data-theme="eva"] main:has(#htCard[open], details.setCard:not(#htCard)[open]) .logCard ol.log { min-height: 220px; max-height: 50vh; }
+    html[data-theme="eva"] main:has(#htCard[open], details.setCard:not(#htCard)[open]) #htCard { align-self: start; }
+    html[data-theme="eva"] #htCard[open], html[data-theme="eva"] details.setCard:not(#htCard)[open] { min-height: min-content; max-height: none; overflow: visible; }
+  }
+  @media (min-width: 1000px) and (min-height: 900px) {
+    html[data-theme="eva"] main { height: auto; min-height: 100%; }
+    html[data-theme="eva"] .logCard ol.log { min-height: 220px; max-height: 50vh; }
+    html[data-theme="eva"] #htCard { min-height: min-content; overflow: visible; align-self: start; }
+  }
   /* EVA：單色 SVG 圖示取代 emoji（Dr. Canvas 繪製，currentColor 跟著文字變色） */
   html[data-theme="eva"] :is(#soundBtn, #metroBtn, #wakeChip, #btnStart, #btnPause, #btnNext, #btnReset, #btnUndo, details.setCard:not(#htCard) > summary, #epiCard[data-state="before"] #epiStatus .es1)::before { content: ""; display: inline-block; width: 1em; height: 1em; margin-right: .4em; vertical-align: -.14em; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
   html[data-theme="eva"] #soundBtn { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M4 9h4l5-4v14l-5-4H4z%22/%3E%3Cpath d=%22M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11%22/%3E%3C/svg%3E"); }
