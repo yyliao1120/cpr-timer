@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#0a0d12">
 <script>try{if(localStorage.getItem('cprTimer.theme')==='eva'){document.documentElement.setAttribute('data-theme','eva');document.querySelector('meta[name="theme-color"]').content='#000000';}}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -193,7 +194,7 @@
     .logCard ol.log { flex: 1 1 auto; height: auto; min-height: 0; gap: 2px; }
     .log li { font-size: 15px; grid-template-columns: 70px 52px 1fr; padding: 4px; }
     details.setCard { flex: 0 0 auto; }
-    .evFoot { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; align-items: center; margin-top: 10px; }
+    .evFoot { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
     .evFoot .noteRow, .evFoot .undoRow { margin-top: 0; }
     #btnUndo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 52px; }
     .noteRow input { min-height: 52px; }
@@ -244,7 +245,7 @@
     --e-track: #1A0C00; --e-track-b: #7A4A12; --e-window: rgba(57,255,106,.28); --e-rule: rgba(255,154,31,.28);
     --e-ui: "Noto Sans CJK TC", "Noto Sans TC", "PingFang TC", -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", sans-serif;
     --e-head: "SerifTC", "Noto Serif CJK TC", serif;
-    --e-cond: "Antonio", "Barlow Condensed", "Arial Narrow", sans-serif;
+    --e-cond: "Antonio", "Barlow Condensed", "Arial Narrow", "Noto Sans CJK TC", "Noto Sans TC", "PingFang TC", sans-serif;
     --e-seg: "DSEG7", ui-monospace, monospace;
   }
   html[data-theme="eva"], html[data-theme="eva"] body { height: auto; overflow: visible; }
@@ -560,6 +561,17 @@
     html[data-theme="eva"] #htCard summary::after { content: "可逆病因"; }
     html[data-theme="eva"] #htCard:not([open]) .htList label:has(input:checked) { padding: 4px 10px; font-size: 16px; }
   }
+  /* EVA：非數字的時間標籤（CPR 前）用一般字體；鍵盤焦點框用黃色；手機上 Epi 副標換行 */
+  html[data-theme="eva"] .log .rel.pre { font-family: var(--e-ui); font-size: 12px; }
+  html[data-theme="eva"] .btn:focus-visible, html[data-theme="eva"] .chip:focus-visible, html[data-theme="eva"] summary:focus-visible { outline: 2px solid #FFD400; outline-offset: 2px; }
+  html[data-theme="eva"] #epiH .subNote { display: block; margin: 2px 0 0; }
+  /* EVA 寬螢幕：有警示或橫幅時改成可捲動，紀錄與 H's & T's 保留最小高度 */
+  @media (min-width: 1000px) {
+    html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) { height: auto; min-height: 100%; }
+    html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) .logCard ol.log { min-height: 220px; max-height: 50vh; }
+    html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) #htCard { min-height: min-content; }
+    html[data-theme="eva"] main:is(:has(#restoreBanner:not([hidden])), :has(#speedBadge:not([hidden])), :has(#alertBar:not([hidden]) .al)) details.setCard:not(#htCard) { max-height: none; }
+  }
   /* EVA：單色 SVG 圖示取代 emoji（Dr. Canvas 繪製，currentColor 跟著文字變色） */
   html[data-theme="eva"] :is(#soundBtn, #metroBtn, #wakeChip, #btnStart, #btnPause, #btnNext, #btnReset, #btnUndo, details.setCard:not(#htCard) > summary, #epiCard[data-state="before"] #epiStatus .es1)::before { content: ""; display: inline-block; width: 1em; height: 1em; margin-right: .4em; vertical-align: -.14em; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
   html[data-theme="eva"] #soundBtn { --ic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 width=%2224%22 height=%2224%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22%3E%3Cpath d=%22M4 9h4l5-4v14l-5-4H4z%22/%3E%3Cpath d=%22M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11%22/%3E%3C/svg%3E"); }
@@ -802,7 +814,7 @@
   function fmtWall(ms) { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
   function fmtDate(ms) { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
   // EVA 主題：彩色 emoji 與終端機風格不搭，顯示時拿掉（原字串存在文字節點 _o，切回原版時還原）
-  const EMOJI = /[\u{1F300}-\u{1FAFF}\u23E9-\u23F3\u23F8-\u23FA\u2699\u26A1\u2764\u2B50\u25B6\u21BA\u21B6]\uFE0F?\s?/gu;
+  const EMOJI = /[\u{1F300}-\u{1FAFF}\u23E9-\u23F3\u23F8-\u23FA\u2699\u26A0\u26A1\u2764\u2B50\u25B6\u21BA\u21B6]\uFE0F?\s?/gu;
   const isEva = () => document.documentElement.getAttribute('data-theme') === 'eva';
   const evaView = (t) => isEva() ? t.replace(EMOJI, '') : t;
   function textNodes(root) {
@@ -962,6 +974,7 @@
       const rel = document.createElement('span');
       rel.className = 'rel';
       rel.textContent = relOf(e.t);
+      if (!S.t0 || e.t < S.t0) rel.classList.add('pre');
       const wall = document.createElement('span');
       wall.className = 'wall';
       wall.textContent = fmtWall(e.t);
@@ -1134,6 +1147,7 @@
   function undoLast() {
     const u = S.undo.pop();
     if (!u) return;
+    if (u.ev.epiAt === S.ev.epiAt) u.ev.epiAlerted = S.ev.epiAlerted; // 同一劑 Epi 的提醒已記過就不再重發
     S.ev = u.ev;
     if (u.cyc) Object.assign(S, u.cyc);
     for (const e of S.log) if (u.ids.includes(e.id)) e.voided = true;
