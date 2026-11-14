@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0d12">
+<title>急救計時器 改良版（訓練用）</title>
+<style>
+  :root {
+    --bg: #0a0d12; --card: #131820; --card2: #1a212c; --line: #263040;
+    --text: #e8edf4; --muted: #8d99ab; --accent: #4da3ff; --ok: #3ccf8e;
+    --warn: #ffb547; --danger: #ff5d5d; --epi: #c38bff; --amio: #5fd3e0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    padding: calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 12px)
+             calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 12px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  main { max-width: 720px; margin: 0 auto; display: grid; gap: 12px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+  h1 { font-size: 18px; margin: 0; }
+  h1 small { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 4px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  button.chip { cursor: pointer; }
+  .chip.on { border-color: var(--ok); color: var(--ok); }
+  .chip.bad { border-color: var(--warn); color: var(--warn); }
+  .banner { border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .banner.info { background: #12263d; border: 1px solid #24476d; }
+  .banner.demo { background: #3a2a0c; border: 1px solid #6b4d14; color: var(--warn); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .card h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  button { font: inherit; color: inherit; }
+  .btn { border: 1px solid var(--line); background: var(--card2); border-radius: 10px; padding: 12px 10px; font-size: 16px; font-weight: 600; cursor: pointer; min-height: 52px; touch-action: manipulation; }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #06121f; }
+  .btn.go { background: var(--ok); border-color: var(--ok); color: #04170e; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: #1d0505; }
+  .btn.small { min-height: 38px; padding: 7px 10px; font-size: 14px; font-weight: 500; }
+  .row { display: grid; gap: 8px; }
+  .row.c3 { grid-template-columns: 1.4fr 1fr 1fr; }
+  .row.c2 { grid-template-columns: 1fr 1fr; }
+
+  /* CPR card */
+  #cprCard[data-state="due"] { border-color: var(--danger); box-shadow: 0 0 0 2px rgba(255,93,93,.35) inset; animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { background: #2a1414; } }
+  @media (prefers-reduced-motion: reduce) { #cprCard[data-state="due"] { animation: none; background: #2a1414; } }
+  .bigtime { font-variant-numeric: tabular-nums; font-size: clamp(64px, 22vw, 112px); font-weight: 700; line-height: 1; text-align: center; letter-spacing: 1px; }
+  #cprCard[data-state="due"] .bigtime { color: var(--danger); }
+  #cprCard[data-state="paused"] .bigtime { color: var(--warn); }
+  .overtime { text-align: center; color: var(--danger); font-size: 14px; font-weight: 700; letter-spacing: 2px; min-height: 0; margin-bottom: 4px; }
+  .bar { height: 8px; border-radius: 99px; background: var(--card2); overflow: hidden; margin: 10px 0; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .25s linear; }
+  #cprCard[data-state="due"] .bar > div { background: var(--danger); }
+  .status { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+  #cprCard[data-state="due"] .status { color: var(--danger); font-weight: 700; font-size: 16px; }
+  .pauseNote { text-align: center; font-size: 13px; color: var(--warn); margin: -4px 0 10px; }
+  .subNote { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .counters { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .counters b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* events */
+  .evgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ev { min-height: 58px; font-size: 17px; }
+  .ev[data-event="shock"] { border-color: #6b4d14; color: var(--warn); }
+  .ev[data-event="epi"] { border-color: #4b3570; color: var(--epi); }
+  .ev[data-event="amio"] { border-color: #20555c; color: var(--amio); }
+  .ev[data-event="rosc"] { border-color: #1e5a40; color: var(--ok); }
+  .ev.logged { background: var(--ok) !important; color: #04170e !important; border-color: var(--ok) !important; }
+  .picker { margin-top: 8px; padding: 10px; border: 1px dashed var(--line); border-radius: 10px; background: var(--card2); }
+  .picker p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+  .picker .row { grid-template-columns: 1fr 1fr; }
+  .noteRow { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; }
+  input[type="text"], select { font: inherit; font-size: 16px; color: var(--text); background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; min-height: 44px; width: 100%; }
+  .undoRow { margin-top: 8px; display: grid; }
+
+  /* epi */
+  .epiTop { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .epiTime { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .epiCount { font-size: 13px; color: var(--muted); text-align: right; }
+  .scale { position: relative; height: 26px; margin: 10px 0 4px; border-radius: 6px; background: var(--card2); overflow: hidden; }
+  .scale .win { position: absolute; top: 0; bottom: 0; left: 50%; width: 33.333%; background: repeating-linear-gradient(135deg, rgba(195,139,255,.35) 0 6px, rgba(195,139,255,.12) 6px 12px); }
+  .scale .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; }
+  .scale .cursor { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: var(--epi); border-radius: 2px; }
+  .ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+  .epiStatus { font-size: 14px; margin-top: 8px; }
+  #epiCard[data-state="remind"] { border-color: var(--epi); }
+  #epiCard[data-state="remind"] .epiTime { color: var(--epi); }
+  #epiCard[data-state="over"] { border-color: var(--danger); }
+  #epiCard[data-state="over"] .epiTime { color: var(--danger); }
+  .alertBox { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #2b1c40; border: 1px solid var(--epi); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+  /* log */
+  .logHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .total { font-size: 14px; color: var(--muted); }
+  .total b { color: var(--text); font-variant-numeric: tabular-nums; font-size: 18px; }
+  .total .subNote { display: block; margin-top: 2px; }
+  .logMeta { font-size: 12px; color: var(--muted); font-weight: 400; }
+  ol.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .log li { display: grid; grid-template-columns: 62px 48px 1fr; gap: 6px; align-items: baseline; font-size: 14px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  .log .rel { font-variant-numeric: tabular-nums; color: var(--accent); }
+  .log .tag { font-size: 11px; color: var(--muted); }
+  .log .wall { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; display: block; }
+  .log li.kind-alert .text { color: var(--warn); }
+  .log li.kind-undo .text { color: var(--muted); font-style: italic; }
+  .log li.voided .text { text-decoration: line-through; color: var(--muted); }
+  .empty { color: var(--muted); font-size: 14px; }
+  .msg { font-size: 13px; color: var(--ok); min-height: 1em; }
+  textarea.manual { width: 100%; min-height: 160px; margin-top: 8px; background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 10px; font-size: 12px; }
+  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .settings label { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+  footer { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  footer a { color: var(--accent); }
+  [hidden] { display: none !important; }
+  .btn { -webkit-user-select: none; user-select: none; }
+  .col { display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .ctrl { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; }
+  .ctrl #btnNext { grid-column: 1 / -1; }
+  #cprCard[data-state="due"] #btnNext { animation: pulseBtn 1s ease-in-out infinite; }
+  @keyframes pulseBtn { 50% { box-shadow: 0 0 0 4px rgba(77,163,255,.45); } }
+  details.setCard summary { cursor: pointer; font-size: 14px; color: var(--muted); font-weight: 600; list-style: none; }
+  details.setCard summary::-webkit-details-marker { display: none; }
+  details.setCard[open] summary { margin-bottom: 10px; }
+  details.setCard footer { margin-top: 10px; }
+
+  /* 頂部警示總覽（文件流內，不覆蓋控制項） */
+  .alertBar { display: grid; gap: 6px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); }
+  .alertBar .al { border-radius: 10px; padding: 10px 14px; font-size: 20px; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; border: 2px solid; }
+  .alertBar .al.danger { border-color: var(--danger); background: #3a1414; color: var(--danger); }
+  .alertBar .al.warn { border-color: var(--warn); background: #3a2a0c; color: var(--warn); }
+  .alertBar .al b { color: var(--text); }
+  .sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ===== iPad / tablet landscape: two columns, one screen, no page scroll ===== */
+  @media (min-width: 900px) and (orientation: landscape) {
+    html, body { height: 100%; overflow: hidden; }
+    body { padding: calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 14px)
+                    calc(env(safe-area-inset-bottom) + 10px) calc(env(safe-area-inset-left) + 14px); }
+    main {
+      max-width: none; height: 100%;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto minmax(0, 1fr);
+      gap: 12px;
+    }
+    header, .banner, .alertBar { grid-column: 1 / -1; }
+    .alertBar .al { font-size: 22px; padding: 8px 16px; }
+    .col { grid-row: 5; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+    .colL { grid-column: 1; }
+    .colR { grid-column: 2; display: flex; flex-direction: column; }
+    h1 { font-size: 20px; }
+    .chip { font-size: 14px; padding: 7px 12px; }
+    .card { padding: 16px; }
+    .card h2 { font-size: 15px; }
+
+    .bigtime { font-size: clamp(96px, 19vh, 180px); }
+    .overtime { font-size: 16px; }
+    .status { font-size: 17px; }
+    #cprCard[data-state="due"] .status { font-size: 19px; }
+    .ctrl { grid-template-columns: 1.3fr 1fr 1fr 1.3fr; }
+    .ctrl #btnNext { grid-column: auto; }
+    .ctrl .btn { min-height: 76px; font-size: 20px; }
+    .counters { font-size: 16px; gap: 22px; }
+
+    .evgrid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .ev { min-height: 78px; font-size: 20px; }
+    .picker .row { grid-template-columns: repeat(4, 1fr); }
+    .picker .btn.small { min-height: 60px; font-size: 17px; }
+    .btn.small { min-height: 48px; font-size: 16px; }
+
+    .epiTime { font-size: 56px; }
+    .epiCount, .epiStatus { font-size: 15px; }
+    #epiCard { position: sticky; top: 0; z-index: 2; flex: 0 0 auto; background: var(--card); }
+    .logCard { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+    .logCard ol.log { flex: 1 1 auto; overflow: auto; min-height: 0; gap: 2px; overscroll-behavior: contain; }
+    .log li { font-size: 15px; grid-template-columns: 70px 52px 1fr; padding: 4px; }
+    details.setCard { flex: 0 0 auto; }
+    .evFoot { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; align-items: center; margin-top: 10px; }
+    .evFoot .noteRow, .evFoot .undoRow { margin-top: 0; }
+    #btnUndo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 52px; }
+    .noteRow input { min-height: 52px; }
+    .noteRow .btn { min-height: 52px; }
+    .banner { padding: 6px 12px; font-size: 13px; }
+    .counters { margin-top: 8px; }
+    .bigtime { font-size: clamp(90px, 15.5vh, 170px); }
+  }
+  /* shorter landscape screens (iPad mini, 11"): tighten vertically */
+  @media (min-width: 900px) and (orientation: landscape) and (max-height: 820px) {
+    .bigtime { font-size: clamp(80px, 14vh, 130px); }
+    .overtime { font-size: 15px; }
+    .status { margin-bottom: 8px; }
+    .ctrl .btn { min-height: 66px; }
+    .ev { min-height: 66px; }
+    .card { padding: 12px 14px; }
+    .bar { margin: 6px 0; }
+    .epiTime { font-size: 46px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="alertBar" id="alertBar" role="region" aria-label="進行中警示" hidden></div>
+  <div class="sr" id="alertLive" role="status" aria-live="polite"></div>
+  <header>
+    <h1>急救計時器<small>改良版・訓練用</small></h1>
+    <div class="chips">
+      <button class="chip on" id="soundBtn" aria-pressed="true">🔔 提示音：開</button>
+      <button class="chip on" id="metroBtn" aria-pressed="true">🥁 按壓節拍 120：開</button>
+      <span class="chip" id="wakeChip">💡 螢幕常亮：未啟用</span>
+    </div>
+  </header>
+
+  <div class="banner info" id="restoreBanner" hidden>
+    <span id="restoreText">已還原上次的紀錄</span>
+  </div>
+  <div class="banner demo" id="speedBadge" hidden></div>
+
+  <div class="col colL">
+  <!-- CPR cycle -->
+  <section class="card" id="cprCard" data-state="idle" aria-labelledby="cprH">
+    <h2 id="cprH"><span>CPR 週期（2 分鐘）</span><span id="cycleNo">尚未開始</span></h2>
+    <div class="overtime" id="overtime" aria-live="polite" hidden></div>
+    <div class="bigtime" id="cprTime" aria-live="off">02:00</div>
+    <div class="bar"><div id="cprBar"></div></div>
+    <div class="status" id="cprStatus" aria-live="polite">● 準備就緒</div>
+    <div class="pauseNote" id="pauseNote" hidden>暫停只停 CPR 週期；總經過時間與 Epinephrine 計時仍持續計時（受示範速度影響）</div>
+    <div class="ctrl">
+      <button class="btn go" id="btnStart">▶ 開始 CPR</button>
+      <button class="btn" id="btnPause" disabled>⏸ 暫停</button>
+      <button class="btn" id="btnReset" disabled>↺ 重置</button>
+      <button class="btn primary" id="btnNext" disabled>⏭ 下一輪</button>
+    </div>
+    <div class="counters">
+      <span>電擊 <b id="cShock">0</b></span>
+      <span>Epinephrine <b id="cEpi">0</b></span>
+      <span>Amiodarone <b id="cAmio">0</b></span>
+    </div>
+  </section>
+
+  <!-- Events -->
+  <section class="card" aria-labelledby="evH">
+    <h2 id="evH"><span>事件記錄</span><span style="font-weight:400">按下即記錄時間</span></h2>
+    <div class="evgrid">
+      <button class="btn ev" data-event="rhythm">心律檢查…</button>
+      <button class="btn ev" data-event="shock">⚡ 電擊</button>
+      <button class="btn ev" data-event="epi">💉 Epinephrine</button>
+      <button class="btn ev" data-event="amio">💊 Amiodarone</button>
+      <button class="btn ev" data-event="airway">高級呼吸道</button>
+      <button class="btn ev" data-event="rosc">❤ ROSC</button>
+    </div>
+    <div class="picker" id="rhythmPicker" hidden>
+      <p>選擇心律（會記錄在 log）</p>
+      <div class="row">
+        <button class="btn small" data-rhythm="VF/pVT（可電擊）">VF / pVT</button>
+        <button class="btn small" data-rhythm="PEA（不可電擊）">PEA</button>
+        <button class="btn small" data-rhythm="Asystole（不可電擊）">Asystole</button>
+        <button class="btn small" data-rhythm="有組織心律，檢查脈搏">有組織心律</button>
+      </div>
+      <div class="row" style="margin-top:8px"><button class="btn small" id="rhythmCancel">取消</button></div>
+    </div>
+    <div class="evFoot">
+    <form class="noteRow" id="noteForm">
+      <input type="text" id="noteInput" placeholder="其他事件，例如：給 Calcium、換手" maxlength="80" autocomplete="off">
+      <button class="btn small" type="submit">加入</button>
+    </form>
+    <div class="undoRow">
+      <button class="btn small" id="btnUndo" disabled>↶ 撤銷上一筆事件</button>
+    </div>
+    </div>
+  </section>
+  </div>
+
+  <div class="col colR">
+  <!-- Epinephrine -->
+  <section class="card" id="epiCard" data-state="none" aria-labelledby="epiH">
+    <h2 id="epiH"><span>距上次 Epinephrine</span><span class="subNote">不受 CPR 暫停影響</span></h2>
+    <div class="epiTop">
+      <div class="epiTime" id="epiTime">--:--</div>
+      <div class="epiCount" id="epiCount">尚未記錄</div>
+    </div>
+    <div class="scale" aria-hidden="true">
+      <div class="win"></div>
+      <div class="mark" id="remindMark"></div>
+      <div class="cursor" id="epiCursor" hidden></div>
+    </div>
+    <div class="ticks" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6 分</span></div>
+    <div class="epiStatus" id="epiStatus" aria-live="polite"></div>
+    <div class="alertBox" id="epiAlert" hidden role="alert">
+      <span id="epiAlertText"></span>
+      <button class="btn small" id="epiAck">知道了</button>
+    </div>
+  </section>
+
+  <!-- Log -->
+  <section class="card logCard" aria-labelledby="logH">
+    <h2 id="logH"><span>紀錄（log）</span><span class="logMeta" id="logMeta">最新在上</span></h2>
+    <div class="logHead">
+      <div class="total">總經過時間 <b id="totalTime">--:--</b><span class="subNote">不受 CPR 暫停影響</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn small" id="btnCopy">複製 log</button>
+        <button class="btn small" id="btnNew">開新案例</button>
+      </div>
+    </div>
+    <div class="msg" id="copyMsg" aria-live="polite"></div>
+    <textarea class="manual" id="manualCopy" readonly hidden></textarea>
+    <p class="empty" id="logEmpty">尚無紀錄</p>
+    <ol class="log" id="logList"></ol>
+  </section>
+
+  <!-- Settings -->
+  <details class="card setCard">
+    <summary>⚙ 設定與說明</summary>
+    <div class="settings">
+      <label>Epinephrine 提醒
+        <select id="epiRemind">
+          <option value="180">3:00</option>
+          <option value="210">3:30</option>
+          <option value="240" selected>4:00（預設）</option>
+          <option value="270">4:30</option>
+          <option value="300">5:00</option>
+        </select>
+      </label>
+      <label>時間速度（課堂示範）
+        <select id="speedSel">
+          <option value="1" selected>1×（真實時間）</option>
+          <option value="10">10×</option>
+          <option value="30">30×</option>
+          <option value="60">60×</option>
+        </select>
+      </label>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin:8px 0 0">時間速度只能在案例開始前更改。紀錄會自動存在這台裝置的瀏覽器，重新整理後仍會還原；按「開新案例」才會清除。</p>
+  <footer>
+    訓練用原型，不是醫療器材；請依當地 protocol 與醫療指揮執行。CPR 計時進行中會以每分鐘 120 下的短促「滴」聲提示按壓速率（與 2 分鐘、Epinephrine 的「嗶」聲不同）；超過 2 分鐘仍會繼續，直到按「下一輪」（重新計時並繼續）、「暫停」（停住超時計時，按「繼續」可接續）或「重置」；「暫停」只停 CPR 週期，總經過時間與距上次 Epinephrine 仍持續計時（受示範速度影響）；節拍固定為真實時間，不受示範加速影響。iPhone 開啟靜音模式時不會有聲音，請以畫面閃爍為準。<br>
+    參考：<a href="https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support" target="_blank" rel="noopener">AHA Adult Advanced Life Support</a>（CPR 每 2 分鐘檢查心律；Epinephrine 每 3–5 分鐘；Amiodarone 首劑 300 mg、第二劑 150 mg）
+  </footer>
+  </details>
+  </div>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const CYCLE_MS = 120000;
+  const EPI_WIN_START = 180000;
+  const EPI_WIN_END = 300000;
+  const EPI_SCALE_MAX = 360000;
+  const STORE_KEY = 'cprTimer.v2';
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- state ----------
+  function freshState(keep) {
+    const t = Date.now();
+    return {
+      v: 2,
+      speed: 1, realAnchor: t, simAnchor: t,
+      t0: null,
+      cycle: 0, running: false, remaining: CYCLE_MS, runStart: 0, due: false, dueAt: null,
+      duePaused: false, overMs: 0,
+      ev: { shock: 0, epi: 0, epiAt: null, epiAlerted: false, epiAlertShown: false, amio: 0 },
+      epiRemindMs: keep ? keep.epiRemindMs : 240000,
+      soundOn: keep ? keep.soundOn : true,
+      metroOn: keep ? keep.metroOn : true,
+      log: [], nextId: 1,
+      undo: [],
+    };
+  }
+  let S = freshState();
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      if (!d || d.v !== 2) return false;
+      S = Object.assign(freshState(), d);
+      return true;
+    } catch (_) { return false; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (_) { /* storage optional */ }
+  }
+  function clearStore() {
+    try { localStorage.removeItem(STORE_KEY); } catch (_) {}
+  }
+
+  const now = () => S.simAnchor + (Date.now() - S.realAnchor) * S.speed;
+
+  // ---------- formatting ----------
+  const pad = (n) => String(n).padStart(2, '0');
+  function fmtDur(ms, roundUp) {
+    let s = roundUp ? Math.ceil(ms / 1000) : Math.floor(ms / 1000);
+    if (s < 0) s = 0;
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return h ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  }
+  function fmtWall(ms) { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
+  function fmtDate(ms) { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  function setText(node, text) { if (node.textContent !== text) node.textContent = text; }
+  const remindLabel = () => fmtDur(S.epiRemindMs, false).replace(/^0/, '');
+
+  // ---------- sound / vibration ----------
+  let audioCtx = null;
+  function unlockAudio() {
+    try {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (_) {}
+  }
+  function beep(times, freq) {
+    try { if (S.soundOn && navigator.vibrate) navigator.vibrate(Array(times).fill([200, 120]).flat()); } catch (_) {}
+    if (!S.soundOn || !audioCtx) return;
+    try {
+      const start = audioCtx.currentTime + 0.02;
+      for (let i = 0; i < times; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const s = start + i * 0.32;
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, s);
+        gain.gain.exponentialRampToValueAtTime(0.35, s + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, s + 0.22);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(s);
+        osc.stop(s + 0.25);
+      }
+    } catch (_) {}
+  }
+
+  // ---------- compression metronome: 120/min, real time (ignores demo speed) ----------
+  const METRO_INTERVAL = 60 / 120; // seconds per beat
+  const METRO_AHEAD = 1.5;         // schedule this far ahead so background throttling doesn't drop beats
+  let metroNext = 0;
+  let metroNodes = [];
+  function metroClick(at) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = 1500;
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(0.25, at + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.045);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(at);
+    osc.stop(at + 0.05);
+    metroNodes.push({ osc, end: at + 0.05 });
+  }
+  function metroStopAll() {
+    for (const n of metroNodes) { try { n.osc.stop(); } catch (_) {} }
+    metroNodes = [];
+    metroNext = 0;
+  }
+  function metroPump() {
+    const want = S.metroOn && (S.running || (S.due && !S.duePaused)) && audioCtx && audioCtx.state === 'running';
+    if (!want) { if (metroNodes.length || metroNext) metroStopAll(); return; }
+    try {
+      const ct = audioCtx.currentTime;
+      if (metroNext < ct) metroNext = ct + 0.05;
+      while (metroNext < ct + METRO_AHEAD) { metroClick(metroNext); metroNext += METRO_INTERVAL; }
+      metroNodes = metroNodes.filter((n) => n.end > ct);
+    } catch (_) {}
+  }
+  function renderMetro() {
+    const b = $('metroBtn');
+    b.setAttribute('aria-pressed', String(S.metroOn));
+    b.textContent = S.metroOn ? '🥁 按壓節拍 120：開' : '🥁 按壓節拍 120：關';
+    b.className = 'chip' + (S.metroOn ? ' on' : '');
+  }
+
+  // ---------- wake lock ----------
+  let wakeLock = null;
+  let wakeState = 'idle'; // idle | on | unsupported | denied
+  async function requestWake() {
+    if (S.t0 === null) return;
+    if (!('wakeLock' in navigator)) { wakeState = 'unsupported'; renderWake(); return; }
+    if (wakeLock && !wakeLock.released) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeState = 'on';
+      wakeLock.addEventListener('release', () => { if (wakeState === 'on') wakeState = 'idle'; renderWake(); });
+    } catch (_) { wakeState = 'denied'; }
+    renderWake();
+  }
+  function releaseWake() {
+    try { if (wakeLock) wakeLock.release(); } catch (_) {}
+    wakeLock = null; wakeState = 'idle'; renderWake();
+  }
+  function renderWake() {
+    const c = $('wakeChip');
+    const map = {
+      idle: ['💡 螢幕常亮：未啟用', ''],
+      on: ['💡 螢幕常亮：開', 'on'],
+      unsupported: ['⚠ 螢幕常亮：此瀏覽器不支援，請調長自動鎖定', 'bad'],
+      denied: ['⚠ 螢幕常亮：被拒絕，請調長自動鎖定', 'bad'],
+    }[wakeState];
+    setText(c, map[0]);
+    c.className = 'chip ' + map[1];
+  }
+
+  // ---------- log ----------
+  const KIND_LABEL = { event: '事件', timer: '計時', alert: '提醒', undo: '撤銷' };
+  function relOf(t) { return '+' + fmtDur(t - S.t0, false); }
+  function addLog(kind, text, at) {
+    const t = typeof at === 'number' ? at : now();
+    if (S.t0 === null) S.t0 = t;
+    const entry = { id: S.nextId++, t, kind, text, voided: false };
+    S.log.push(entry);
+    return entry.id;
+  }
+  let lastLogCount = -1;
+  function renderLog() {
+    const list = $('logList');
+    const grew = S.log.length > lastLogCount;
+    lastLogCount = S.log.length;
+    list.textContent = '';
+    const entries = S.log.slice().sort((a, b) => b.t - a.t || b.id - a.id);
+    for (const e of entries) {
+      const li = document.createElement('li');
+      li.className = 'kind-' + e.kind + (e.voided ? ' voided' : '');
+      const rel = document.createElement('span');
+      rel.className = 'rel';
+      rel.textContent = relOf(e.t);
+      const wall = document.createElement('span');
+      wall.className = 'wall';
+      wall.textContent = fmtWall(e.t);
+      rel.appendChild(wall);
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = (e.kind === 'alert' ? '⚠ ' : '') + KIND_LABEL[e.kind];
+      const body = document.createElement('span');
+      body.className = 'text';
+      body.textContent = e.text + (e.voided ? '（已撤銷）' : '');
+      li.append(rel, tag, body);
+      list.appendChild(li);
+    }
+    $('logEmpty').hidden = S.log.length > 0;
+    setText($('logMeta'), S.log.length ? `共 ${S.log.length} 筆・最新在上` : '最新在上');
+    // newest entry is on top: when a new entry arrives, scroll back so it is visible
+    if (grew) list.scrollTop = 0;
+  }
+
+  function commit() { save(); renderLog(); render(); metroPump(); }
+
+  // ---------- CPR cycle ----------
+  function cprRemaining() {
+    return S.running ? Math.max(0, S.remaining - (now() - S.runStart)) : S.remaining;
+  }
+  function startCycle() {
+    if (S.running || (S.due && !S.duePaused)) return;
+    const t = now();
+    if (S.due && S.duePaused) {
+      // resume after pausing during overtime: overtime counter continues from where it stopped
+      S.dueAt = t - S.overMs;
+      S.duePaused = false;
+      S.overMs = 0;
+      addLog('timer', `第 ${S.cycle} 輪繼續（已超時 ${fmtDur(t - S.dueAt, false)}）`, t);
+      requestWake();
+      commit();
+      return;
+    }
+    if (S.cycle === 0) {
+      S.cycle = 1;
+      addLog('event', '開始 CPR（第 1 輪計時開始）', t);
+    } else if (S.remaining === CYCLE_MS) {
+      addLog('timer', `第 ${S.cycle} 輪 CPR 計時開始`, t);
+    } else {
+      addLog('timer', `第 ${S.cycle} 輪繼續（剩 ${fmtDur(S.remaining, true)}）`, t);
+    }
+    S.running = true;
+    S.runStart = t;
+    requestWake();
+    commit();
+  }
+  function pauseCycle() {
+    if (S.due && !S.duePaused && S.dueAt !== null) {
+      // pause during overtime: freeze the overtime counter (and metronome)
+      S.overMs = Math.max(0, now() - S.dueAt);
+      S.duePaused = true;
+      addLog('timer', `第 ${S.cycle} 輪超時中暫停（已超時 ${fmtDur(S.overMs, false)}）`);
+      commit();
+      return;
+    }
+    if (!S.running) return;
+    S.remaining = cprRemaining();
+    S.running = false;
+    addLog('timer', `第 ${S.cycle} 輪暫停（剩 ${fmtDur(S.remaining, true)}）`);
+    commit();
+  }
+  function resetCycle() {
+    if (S.cycle === 0) return;
+    S.running = false;
+    S.remaining = CYCLE_MS;
+    S.due = false;
+    S.dueAt = null;
+    S.duePaused = false;
+    S.overMs = 0;
+    addLog('timer', `第 ${S.cycle} 輪重置為 02:00`);
+    commit();
+  }
+  function nextCycle() {
+    if (S.cycle === 0) return;
+    const t = now();
+    if (S.due && (S.duePaused || S.dueAt !== null)) {
+      const over = S.duePaused ? S.overMs : t - S.dueAt;
+      if (over >= 1000) addLog('timer', `第 ${S.cycle} 輪超時 ${fmtDur(over, false)} 才進入下一輪`, t);
+    }
+    S.cycle += 1;
+    S.running = true;
+    S.remaining = CYCLE_MS;
+    S.runStart = t;
+    S.due = false;
+    S.dueAt = null;
+    S.duePaused = false;
+    S.overMs = 0;
+    addLog('timer', `第 ${S.cycle} 輪 CPR 計時開始`, t);
+    requestWake();
+    commit();
+  }
+
+  // ---------- events (undoable) ----------
+  function snapshotEv() { return JSON.parse(JSON.stringify(S.ev)); }
+  function pushUndo(label, evBefore, ids) {
+    S.undo.push({ label, ev: evBefore, ids });
+    if (S.undo.length > 50) S.undo.shift();
+  }
+  function flash(btn) {
+    if (!btn) return;
+    clearTimeout(btn._flash);
+    btn.classList.add('logged');
+    btn.textContent = '✓ 已記錄';
+    btn._flash = setTimeout(() => { btn.classList.remove('logged'); btn.textContent = btn.dataset.label; }, 700);
+  }
+  function logEvent(key, btn, extra) {
+    const t = now();
+    const before = snapshotEv();
+    let text;
+    if (key === 'shock') {
+      S.ev.shock += 1;
+      text = `電擊（第 ${S.ev.shock} 次）`;
+    } else if (key === 'epi') {
+      S.ev.epi += 1;
+      S.ev.epiAt = t;
+      S.ev.epiAlerted = false;
+      S.ev.epiAlertShown = false;
+      text = `Epinephrine 1 mg（第 ${S.ev.epi} 次）`;
+    } else if (key === 'amio') {
+      S.ev.amio += 1;
+      text = S.ev.amio === 1 ? 'Amiodarone 300 mg（第 1 劑）'
+           : S.ev.amio === 2 ? 'Amiodarone 150 mg（第 2 劑）'
+           : `Amiodarone（第 ${S.ev.amio} 次記錄，已超過建議兩劑）`;
+    } else if (key === 'rhythm') {
+      text = `心律檢查：${extra}`;
+    } else if (key === 'airway') {
+      text = '建立高級呼吸道';
+    } else if (key === 'rosc') {
+      text = 'ROSC';
+    } else if (key === 'note') {
+      text = extra;
+    } else return;
+    const id = addLog('event', text, t);
+    pushUndo(text, before, [id]);
+    flash(btn);
+    requestWake();
+    commit();
+  }
+  function undoLast() {
+    const u = S.undo.pop();
+    if (!u) return;
+    S.ev = u.ev;
+    for (const e of S.log) if (u.ids.includes(e.id)) e.voided = true;
+    addLog('undo', `撤銷：${u.label}`);
+    commit();
+  }
+
+  // ---------- render ----------
+  function render() {
+    const t = now();
+    const rem = cprRemaining();
+    const st = S.due ? (S.duePaused ? 'paused' : 'due') : S.running ? 'running' : (S.cycle > 0 && rem < CYCLE_MS) ? 'paused' : 'idle';
+    const card = $('cprCard');
+    if (card.dataset.state !== st) card.dataset.state = st;
+    setText($('cprTime'), S.due && S.duePaused ? `+${fmtDur(S.overMs, false)}`
+      : S.due && S.dueAt !== null ? `+${fmtDur(t - S.dueAt, false)}` : fmtDur(rem, true));
+    $('cprBar').style.width = (((CYCLE_MS - rem) / CYCLE_MS) * 100).toFixed(2) + '%';
+    setText($('cycleNo'), S.cycle ? `第 ${S.cycle} 輪` : '尚未開始');
+
+    const ot = $('overtime');
+    ot.hidden = !(S.due && (S.duePaused || S.dueAt !== null));
+    setText(ot, '已超時');
+
+    setText($('cprStatus'), {
+      idle: S.cycle ? '● 已重置：按「開始」' : '● 準備就緒：按「開始 CPR」同時開始計時與紀錄',
+      running: '▶ CPR 進行中' + (S.metroOn && (!audioCtx || audioCtx.state !== 'running') ? '（點一下畫面以啟用節拍聲）' : ''),
+      paused: S.due ? '⏸ 超時中已暫停：按「繼續」接續，或按「下一輪」' : '⏸ 已暫停：按「繼續」',
+      due: '⚠ 2 分鐘到：檢查心律 / 換手，然後按「下一輪」',
+    }[st]);
+    setText($('btnStart'), S.cycle === 0 ? '▶ 開始 CPR' : '▶ 繼續');
+    const dueActive = S.due && !S.duePaused;
+    $('btnStart').disabled = S.running || dueActive;
+    $('btnPause').disabled = !(S.running || dueActive);
+    $('pauseNote').hidden = st !== 'paused';
+    $('btnReset').disabled = S.cycle === 0;
+    $('btnNext').disabled = S.cycle === 0;
+
+    setText($('cShock'), String(S.ev.shock));
+    setText($('cEpi'), String(S.ev.epi));
+    setText($('cAmio'), String(S.ev.amio));
+
+    const ub = $('btnUndo');
+    const last = S.undo[S.undo.length - 1];
+    ub.disabled = !last;
+    setText(ub, last ? `↶ 撤銷：${last.label}` : '↶ 撤銷上一筆事件');
+
+    // epinephrine
+    const epiCard = $('epiCard');
+    if (S.ev.epiAt === null) {
+      epiCard.dataset.state = 'none';
+      setText($('epiTime'), '--:--');
+      setText($('epiCount'), '尚未記錄');
+      $('epiCursor').hidden = true;
+      setText($('epiStatus'), '按「Epinephrine」後開始計時');
+    } else {
+      const since = t - S.ev.epiAt;
+      setText($('epiTime'), fmtDur(since, false));
+      setText($('epiCount'), `共 ${S.ev.epi} 次 · 上次 ${fmtWall(S.ev.epiAt)}`);
+      $('epiCursor').hidden = false;
+      $('epiCursor').style.left = (Math.min(since, EPI_SCALE_MAX) / EPI_SCALE_MAX * 100).toFixed(2) + '%';
+      let es, msg;
+      if (since > EPI_WIN_END) { es = 'over'; msg = '⚠ 已超過 5 分鐘（超出 3–5 分鐘區間）'; }
+      else if (since >= S.epiRemindMs) { es = 'remind'; msg = `⏰ 已達 ${remindLabel()} 提醒（3–5 分鐘區間內）`; }
+      else if (since >= EPI_WIN_START) { es = 'window'; msg = `● 已進入 3–5 分鐘區間；${fmtDur(S.epiRemindMs - since, true)} 後提醒`; }
+      else { es = 'before'; msg = `⏳ 未到 3 分鐘；${fmtDur(EPI_WIN_START - since, true)} 後進入區間`; }
+      epiCard.dataset.state = es;
+      setText($('epiStatus'), msg);
+    }
+    $('epiAlert').hidden = !S.ev.epiAlertShown;
+    if (S.ev.epiAlertShown && S.ev.epiAt !== null) setText($('epiAlertText'), `距上次 Epinephrine（${fmtWall(S.ev.epiAt)}）已 ${remindLabel()}`);
+    renderAlerts(t);
+    setText($('totalTime'), S.t0 === null ? '--:--' : fmtDur(t - S.t0, false));
+
+    $('speedSel').disabled = S.t0 !== null;
+    const sb = $('speedBadge');
+    sb.hidden = S.speed === 1;
+    if (S.speed !== 1) setText(sb, `示範加速 ×${S.speed}：時間不是真實時間，僅供課堂展示`);
+  }
+
+  // 頂部警示：完全由現有 S 衍生，不新增狀態
+  function renderAlerts(t) {
+    const list = [];
+    if (S.due && S.duePaused) {
+      list.push({ k: 'cpr', sev: 'danger', txt: `⚠ CPR 週期已超過 2 分鐘：已超時 <b>+${fmtDur(S.overMs, false)}</b>（已暫停）`, say: 'CPR 週期已超過 2 分鐘（已暫停）' });
+    } else if (S.due && S.dueAt !== null) {
+      list.push({ k: 'cpr', sev: 'danger', txt: `⚠ CPR 週期已超過 2 分鐘：已超時 <b>+${fmtDur(t - S.dueAt, false)}</b>`, say: 'CPR 週期已超過 2 分鐘' });
+    }
+    if (S.ev.epiAt !== null) {
+      const since = t - S.ev.epiAt;
+      if (since > EPI_WIN_END) {
+        list.push({ k: 'epiOver', sev: 'danger', txt: `⚠ Epinephrine 已超過 5 分鐘區間：逾期 <b>+${fmtDur(since - EPI_WIN_END, false)}</b>`, say: 'Epinephrine 已超過 5 分鐘區間' });
+      } else if (since >= S.epiRemindMs) {
+        list.push({ k: 'epiRemind', sev: 'warn', txt: `⏰ Epinephrine 已達 ${remindLabel()} 提醒：距上次 <b>${fmtDur(since, false)}</b>，<b>${fmtDur(EPI_WIN_END - since, true)}</b> 後超過 5 分鐘`, say: `Epinephrine 已達 ${remindLabel()} 提醒` });
+      }
+    }
+    const bar = $('alertBar');
+    const sig = list.map((a) => a.k).join(',');
+    if (bar.dataset.sig !== sig) {
+      bar.dataset.sig = sig;
+      bar.replaceChildren(...list.map((a) => { const d = document.createElement('div'); d.className = 'al ' + a.sev; return d; }));
+      bar.hidden = !list.length;
+      setText($('alertLive'), list.map((a) => a.say).join('；'));
+    }
+    list.forEach((a, i) => { const d = bar.children[i]; if (d.innerHTML !== a.txt) d.innerHTML = a.txt; });
+  }
+
+  function updateRemindUi() {
+    $('remindMark').style.left = (S.epiRemindMs / EPI_SCALE_MAX * 100) + '%';
+    $('epiRemind').value = String(S.epiRemindMs / 1000);
+  }
+
+  function tick() {
+    let changed = false;
+    if (S.running && cprRemaining() <= 0) {
+      const dueAt = S.runStart + S.remaining;
+      S.running = false;
+      S.remaining = 0;
+      S.due = true;
+      S.dueAt = dueAt;
+      addLog('alert', `第 ${S.cycle} 輪 2 分鐘到：檢查心律 / 換手`, dueAt);
+      beep(3, 880);
+      changed = true;
+    }
+    if (S.ev.epiAt !== null && !S.ev.epiAlerted && now() - S.ev.epiAt >= S.epiRemindMs) {
+      S.ev.epiAlerted = true;
+      S.ev.epiAlertShown = true;
+      setText($('epiAlertText'), `距上次 Epinephrine（${fmtWall(S.ev.epiAt)}）已 ${remindLabel()}`);
+      addLog('alert', `Epinephrine ${remindLabel()} 提醒`, S.ev.epiAt + S.epiRemindMs);
+      beep(2, 660);
+      changed = true;
+    }
+    if (changed) commit(); else render();
+  }
+
+  // ---------- copy ----------
+  function logText() {
+    const rows = S.log.slice().sort((a, b) => a.t - b.t || a.id - b.id);
+    return [
+      '急救計時器 log（訓練用途，請依當地 protocol 與醫療指揮）',
+      `日期 ${fmtDate(S.t0)}；相對時間從第一筆紀錄起算`,
+      `合計：電擊 ${S.ev.shock} 次、Epinephrine ${S.ev.epi} 次、Amiodarone ${S.ev.amio} 次`,
+      ['相對時間', '實際時間', '類別', '內容'].join('\t'),
+      ...rows.map((e) => [relOf(e.t), fmtWall(e.t), KIND_LABEL[e.kind], e.text + (e.voided ? '（已撤銷）' : '')].join('\t')),
+    ].join('\n');
+  }
+  async function copyLog() {
+    const msg = $('copyMsg');
+    const ta = $('manualCopy');
+    if (!S.log.length) { setText(msg, '尚無紀錄可複製'); return; }
+    const text = logText();
+    let ok = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); ok = true; }
+    } catch (_) { ok = false; }
+    if (ok) { ta.hidden = true; setText(msg, `✓ 已複製 ${S.log.length} 筆`); }
+    else {
+      ta.value = text; ta.hidden = false; ta.focus(); ta.select();
+      setText(msg, '無法自動複製：已選取下方文字，請手動複製');
+    }
+  }
+
+  // ---------- new case (two-tap confirm, no dialogs) ----------
+  let newArmed = null;
+  function newCase() {
+    const b = $('btnNew');
+    if (S.t0 === null) return;
+    if (!newArmed) {
+      b.textContent = '再按一次確認清除';
+      b.classList.add('danger');
+      newArmed = setTimeout(() => { newArmed = null; b.textContent = '開新案例'; b.classList.remove('danger'); }, 3000);
+      return;
+    }
+    clearTimeout(newArmed); newArmed = null;
+    b.textContent = '開新案例'; b.classList.remove('danger');
+    S = freshState(S); // speed resets to 1× here
+    $('speedSel').value = '1';
+    clearStore();
+    releaseWake();
+    $('restoreBanner').hidden = true;
+    $('manualCopy').hidden = true;
+    setText($('copyMsg'), '已清除，可開始新案例');
+    save();
+    renderLog(); render();
+  }
+
+  // ---------- wire up ----------
+  document.addEventListener('click', unlockAudio, true);
+  $('btnStart').addEventListener('click', startCycle);
+  $('btnPause').addEventListener('click', pauseCycle);
+  $('btnReset').addEventListener('click', resetCycle);
+  $('btnNext').addEventListener('click', nextCycle);
+  $('btnUndo').addEventListener('click', undoLast);
+  $('btnCopy').addEventListener('click', copyLog);
+  $('btnNew').addEventListener('click', newCase);
+
+  const picker = $('rhythmPicker');
+  document.querySelectorAll('.ev').forEach((btn) => {
+    btn.dataset.label = btn.textContent;
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.event;
+      if (k === 'rhythm') {
+        picker.hidden = !picker.hidden;
+        if (!picker.hidden) try { picker.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {}
+        return;
+      }
+      logEvent(k, btn);
+    });
+  });
+  picker.querySelectorAll('[data-rhythm]').forEach((b) => {
+    b.addEventListener('click', () => {
+      picker.hidden = true;
+      logEvent('rhythm', document.querySelector('.ev[data-event="rhythm"]'), b.dataset.rhythm);
+    });
+  });
+  $('rhythmCancel').addEventListener('click', () => { picker.hidden = true; });
+
+  $('noteForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = $('noteInput').value.trim();
+    if (!v) return;
+    $('noteInput').value = '';
+    logEvent('note', null, v);
+  });
+
+  $('epiAck').addEventListener('click', () => { S.ev.epiAlertShown = false; commit(); });
+  $('epiRemind').addEventListener('change', () => {
+    S.epiRemindMs = Number($('epiRemind').value) * 1000;
+    if (S.ev.epiAt !== null && now() - S.ev.epiAt < S.epiRemindMs) {
+      S.ev.epiAlerted = false;
+      S.ev.epiAlertShown = false;
+    }
+    updateRemindUi();
+    save();
+    tick();
+  });
+  $('speedSel').addEventListener('change', () => {
+    if (S.t0 !== null) return;
+    const v = Number($('speedSel').value);
+    const t = Date.now();
+    S.speed = [1, 10, 30, 60].includes(v) ? v : 1;
+    S.realAnchor = t; S.simAnchor = t;
+    save(); render();
+  });
+  $('soundBtn').addEventListener('click', () => {
+    S.soundOn = !S.soundOn;
+    renderSound();
+    save();
+  });
+  $('metroBtn').addEventListener('click', () => {
+    S.metroOn = !S.metroOn;
+    renderMetro();
+    save();
+    metroPump();
+  });
+  function renderSound() {
+    const b = $('soundBtn');
+    b.setAttribute('aria-pressed', String(S.soundOn));
+    b.textContent = S.soundOn ? '🔔 提示音：開' : '🔕 提示音：關';
+    b.className = 'chip' + (S.soundOn ? ' on' : '');
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (S.t0 !== null) requestWake();
+      tick();
+    }
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (S.t0 !== null) { save(); e.preventDefault(); e.returnValue = ''; }
+  });
+
+  // ---------- boot ----------
+  if (load() && S.t0 !== null) {
+    $('restoreBanner').hidden = false;
+    setText($('restoreText'), `已還原進行中的紀錄（開始於 ${fmtWall(S.t0)}，共 ${S.log.length} 筆）。要重來請按「開新案例」。`);
+  }
+  $('speedSel').value = String(S.speed);
+  renderSound();
+  renderMetro();
+  setInterval(metroPump, 100);
+  renderWake();
+  updateRemindUi();
+  renderLog();
+  tick();
+  (function loop() { tick(); setTimeout(loop, Math.max(25, Math.round(250 / S.speed))); })();
+})();
+</script>
+</body>
+</html>
