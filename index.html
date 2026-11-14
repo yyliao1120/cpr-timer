@@ -36,7 +36,7 @@
   .card h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   button { font: inherit; color: inherit; }
   .btn { border: 1px solid var(--line); background: var(--card2); border-radius: 10px; padding: 12px 10px; font-size: 16px; font-weight: 600; cursor: pointer; min-height: 52px; touch-action: manipulation; }
-  .btn:disabled { opacity: .35; cursor: default; }
+  .btn:disabled { opacity: .35; filter: grayscale(1); cursor: default; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: #06121f; }
   .btn.go { background: var(--ok); border-color: var(--ok); color: #04170e; }
   .btn.danger { background: var(--danger); border-color: var(--danger); color: #1d0505; }
@@ -70,6 +70,7 @@
   .ev[data-event="epi"] { border-color: #4b3570; color: var(--epi); }
   .ev[data-event="amio"] { border-color: #20555c; color: var(--amio); }
   .ev[data-event="rosc"] { border-color: #1e5a40; color: var(--ok); }
+  .ev[data-event="rearrest"] { border-color: #6b1e1e; color: var(--danger); }
   .ev.logged { background: var(--ok) !important; color: #04170e !important; border-color: var(--ok) !important; }
   .picker { margin-top: 8px; padding: 10px; border: 1px dashed var(--line); border-radius: 10px; background: var(--card2); }
   .picker p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
@@ -84,9 +85,12 @@
   .epiCount { font-size: 13px; color: var(--muted); text-align: right; }
   .scale { position: relative; height: 26px; margin: 10px 0 4px; border-radius: 6px; background: var(--card2); overflow: hidden; }
   .scale .win { position: absolute; top: 0; bottom: 0; left: 50%; width: 33.333%; background: repeating-linear-gradient(135deg, rgba(195,139,255,.35) 0 6px, rgba(195,139,255,.12) 6px 12px); }
-  .scale .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; }
+  .scale .mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; }
   .scale .cursor { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: var(--epi); border-radius: 2px; }
-  .ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+  /* 刻度：每個數字的中心對準時間軸上的 i/6 位置 */
+  .ticks { position: relative; height: 1.4em; font-size: 11px; color: var(--muted); }
+  .ticks span { position: absolute; transform: translateX(-50%); }
+  .ticks small { position: absolute; left: 100%; padding-left: 2px; font-size: inherit; white-space: nowrap; }
   .epiStatus { font-size: 14px; margin-top: 8px; }
   #epiCard[data-state="remind"] { border-color: var(--epi); }
   #epiCard[data-state="remind"] .epiTime { color: var(--epi); }
@@ -263,6 +267,7 @@
       <button class="btn ev" data-event="amio">💊 Amiodarone</button>
       <button class="btn ev" data-event="airway">高級呼吸道</button>
       <button class="btn ev" data-event="rosc">❤ ROSC</button>
+      <button class="btn ev" data-event="rearrest" hidden>💔 再次停止心跳</button>
     </div>
     <div class="picker" id="rhythmPicker" hidden>
       <p>選擇心律（會記錄在 log）</p>
@@ -298,7 +303,7 @@
       <div class="mark" id="remindMark"></div>
       <div class="cursor" id="epiCursor" hidden></div>
     </div>
-    <div class="ticks" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6 分</span></div>
+    <div class="ticks" aria-hidden="true"><span style="left:0%">0</span><span style="left:16.667%">1</span><span style="left:33.333%">2</span><span style="left:50%">3</span><span style="left:66.667%">4</span><span style="left:83.333%">5</span><span style="left:100%">6<small>分</small></span></div>
     <div class="epiStatus" id="epiStatus" aria-live="polite"></div>
   </section>
 
@@ -349,8 +354,8 @@
     <p style="font-size:12px;color:var(--muted);margin:8px 0 0">時間速度只能在按「開始 CPR」前更改；總經過時間從「開始 CPR」起算，之前的紀錄標示為「CPR 前」。紀錄會自動存在這台裝置的瀏覽器，重新整理後仍會還原；按「開新案例」才會清除。</p>
   <footer>
     訓練用原型，不是醫療器材；請依當地 protocol 與醫療指揮執行。CPR 計時進行中會以每分鐘 120 下的短促「滴」聲提示按壓速率（與 2 分鐘、Epinephrine 的「嗶」聲不同）；超過 2 分鐘仍會繼續，直到按「下一輪」（重新計時並繼續）、「暫停」（停住超時計時，按「繼續」可接續）或「重置」；「暫停」只停 CPR 週期，總經過時間與距上次 Epinephrine 仍持續計時（受示範速度影響）；節拍固定為真實時間，不受示範加速影響。iPhone 開啟靜音模式時不會有聲音，請以畫面閃爍為準。<br>
-    參考：<a href="https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support" target="_blank" rel="noopener">AHA Adult Advanced Life Support</a>（CPR 每 2 分鐘檢查心律；Epinephrine 每 3–5 分鐘；Amiodarone 首劑 300 mg、第二劑 150 mg）<br>
-    首劑 Epinephrine 時機依心律（不可電擊心律盡早給；可電擊心律於初次電擊後仍持續才給）：AHA 2020 Highlights p.14
+    參考：<a href="https://www.ahajournals.org/doi/full/10.1161/CIR.0000000000001376" target="_blank" rel="noopener">2025 AHA Guidelines Part 9: Adult Advanced Life Support</a>（<a href="https://professional.heart.org/-/media/CPR-Files/CPR-Guidelines-Files/2025-Algorithms/Algorithm-ACLS-CA-Circular-250620.pdf" target="_blank" rel="noopener">2025 心跳停止演算法</a>）<br>
+    CPR 每 2 分鐘檢查心律；Epinephrine 1 mg IV/IO 每 3–5 分鐘，不可電擊心律盡早給，可電擊心律於初次電擊失敗後給；Amiodarone 首劑 300 mg、第二劑 150 mg（演算法圖 Drug Therapy 欄）
   </footer>
   </details>
   </div>
@@ -697,6 +702,17 @@
       if (S.due && !S.duePaused && S.dueAt !== null) { S.overMs = Math.max(0, t - S.dueAt); S.duePaused = true; }
       S.ev.roscAt = t;
       text = 'ROSC（計時停止）';
+    } else if (key === 'rearrest') {
+      if (S.ev.roscAt === null) return;
+      // ROSC 後再停止心跳：從現在開新的一輪；ROSC 那段時間照實計入總時間（撤銷可還原）
+      cyc = { cycle: S.cycle, t0: S.t0 };
+      for (const k of CYC_KEYS) cyc[k] = S[k];
+      if (S.t0 === null) S.t0 = t;
+      S.ev.roscAt = null;
+      S.ev.rhythm = null;
+      S.cycle += 1;
+      Object.assign(S, { running: true, remaining: CYCLE_MS, runStart: t, due: false, dueAt: null, duePaused: false, overMs: 0 });
+      text = `ROSC 後再停止心跳（第 ${S.cycle} 輪 CPR 計時開始）`;
     } else if (key === 'ht') {
       const on = !S.ev.ht.includes(extra);
       S.ev.ht = on ? S.ev.ht.concat(extra) : S.ev.ht.filter((x) => x !== extra);
@@ -742,7 +758,7 @@
       running: '▶ CPR 進行中' + (S.metroOn && (!audioCtx || audioCtx.state !== 'running') ? '（點一下畫面以啟用節拍聲）' : ''),
       paused: S.due ? '⏸ 超時中已暫停：按「繼續」接續，或按「下一輪」' : '⏸ 已暫停：按「繼續」',
       due: '⚠ 2 分鐘到：檢查心律 / 換手，然後按「下一輪」',
-      rosc: '❤ 已記錄 ROSC：CPR 週期、節拍與提醒已停止（可撤銷 ROSC 或開新案例）',
+      rosc: '❤ 已記錄 ROSC：CPR 週期、節拍與提醒已停止（再停止心跳請按「💔 再次停止心跳」）',
     }[st]);
     setText($('btnStart'), S.cycle === 0 ? '▶ 開始 CPR' : '▶ 繼續');
     const dueActive = S.due && !S.duePaused;
@@ -751,7 +767,8 @@
     $('pauseNote').hidden = st !== 'paused';
     $('btnReset').disabled = S.cycle === 0 || rosc;
     $('btnNext').disabled = S.cycle === 0 || rosc;
-    document.querySelector('.ev[data-event="rosc"]').disabled = rosc;
+    document.querySelector('.ev[data-event="rosc"]').hidden = rosc;
+    document.querySelector('.ev[data-event="rearrest"]').hidden = !rosc;
 
     setText($('cShock'), String(S.ev.shock));
     setText($('cEpi'), String(S.ev.epi));
@@ -798,9 +815,11 @@
   // 頂部警示：完全由現有 S 衍生，不新增狀態
   function renderAlerts(t) {
     const list = [];
-    // 首劑 Epinephrine 依心律提示（AHA 2020 Highlights p.14），直到記錄第一次 Epinephrine
+    // 首劑 Epinephrine 依心律提示（2025 AHA Adult ALS），直到記錄第一次 Epinephrine
     if (S.ev.epi === 0 && S.ev.rhythm === 'nonshock') {
       list.push({ k: 'rhyNS', sev: 'danger', txt: '💉 不可電擊心律：盡早給 Epinephrine', say: '不可電擊心律：盡早給 Epinephrine' });
+    } else if (S.ev.epi === 0 && S.ev.rhythm === 'shock' && S.ev.shock > 0) {
+      list.push({ k: 'rhyS2', sev: 'danger', txt: '⚡ 電擊後仍為 VF/pVT：準備給 Epinephrine（並再次電擊）', say: '電擊後仍為 VF/pVT：準備給 Epinephrine，並再次電擊' });
     } else if (S.ev.epi === 0 && S.ev.rhythm === 'shock') {
       list.push({ k: 'rhyS', sev: 'warn', txt: '⚡ 可電擊心律：先電擊＋CPR，電擊後仍持續才給 Epinephrine', say: '可電擊心律：先電擊加 CPR，電擊後仍持續才給 Epinephrine' });
     }
