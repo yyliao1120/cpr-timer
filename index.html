@@ -52,7 +52,7 @@
   .bigtime { font-variant-numeric: tabular-nums; font-size: clamp(64px, 22vw, 112px); font-weight: 700; line-height: 1; text-align: center; letter-spacing: 1px; }
   #cprCard[data-state="due"] .bigtime { color: var(--danger); }
   #cprCard[data-state="paused"] .bigtime { color: var(--warn); }
-  .overtime { text-align: center; color: var(--danger); font-size: 14px; font-weight: 700; letter-spacing: 2px; min-height: 0; margin-bottom: 4px; }
+  .overtime { text-align: center; color: var(--danger); font-size: 14px; font-weight: 700; letter-spacing: 2px; }
   .bar { height: 8px; border-radius: 99px; background: var(--card2); overflow: hidden; margin: 10px 0; }
   .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .25s linear; }
   #cprCard[data-state="due"] .bar > div { background: var(--danger); }
@@ -92,7 +92,9 @@
   #epiCard[data-state="remind"] .epiTime { color: var(--epi); }
   #epiCard[data-state="over"] { border-color: var(--danger); }
   #epiCard[data-state="over"] .epiTime { color: var(--danger); }
-  .alertBox { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #2b1c40; border: 1px solid var(--epi); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .htList { display: grid; gap: 6px; }
+  .htList label { display: flex; align-items: center; gap: 10px; font-size: 15px; padding: 8px 6px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .htList input { width: 22px; height: 22px; flex: 0 0 auto; accent-color: var(--ok); }
 
   /* log */
   .logHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -100,7 +102,8 @@
   .total b { color: var(--text); font-variant-numeric: tabular-nums; font-size: 18px; }
   .total .subNote { display: block; margin-top: 2px; }
   .logMeta { font-size: 12px; color: var(--muted); font-weight: 400; }
-  ol.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  ol.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; align-content: start;
+           height: 45vh; overflow-y: auto; overscroll-behavior: contain; } /* 固定高度，卡片內捲動 */
   .log li { display: grid; grid-template-columns: 62px 48px 1fr; gap: 6px; align-items: baseline; font-size: 14px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
   .log .rel { font-variant-numeric: tabular-nums; color: var(--accent); }
   .log .tag { font-size: 11px; color: var(--muted); }
@@ -110,7 +113,6 @@
   .log li.voided .text { text-decoration: line-through; color: var(--muted); }
   .empty { color: var(--muted); font-size: 14px; }
   .msg { font-size: 13px; color: var(--ok); min-height: 1em; }
-  textarea.manual { width: 100%; min-height: 160px; margin-top: 8px; background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 10px; font-size: 12px; }
   .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .settings label { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
   footer { font-size: 12px; color: var(--muted); line-height: 1.6; }
@@ -165,7 +167,7 @@
     .ctrl .btn { min-height: 76px; font-size: 20px; }
     .counters { font-size: 16px; gap: 22px; }
 
-    .evgrid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .evgrid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
     .ev { min-height: 78px; font-size: 20px; }
     .picker .row { grid-template-columns: repeat(4, 1fr); }
     .picker .btn.small { min-height: 60px; font-size: 17px; }
@@ -174,8 +176,8 @@
     .epiTime { font-size: 56px; }
     .epiCount, .epiStatus { font-size: 15px; }
     #epiCard { position: sticky; top: 0; z-index: 2; flex: 0 0 auto; background: var(--card); }
-    .logCard { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-    .logCard ol.log { flex: 1 1 auto; overflow: auto; min-height: 0; gap: 2px; overscroll-behavior: contain; }
+    .logCard { flex: 1 1 0; min-height: 260px; display: flex; flex-direction: column; }
+    .logCard ol.log { flex: 1 1 auto; height: auto; min-height: 0; gap: 2px; }
     .log li { font-size: 15px; grid-template-columns: 70px 52px 1fr; padding: 4px; }
     details.setCard { flex: 0 0 auto; }
     .evFoot { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; align-items: center; margin-top: 10px; }
@@ -197,6 +199,18 @@
     .card { padding: 12px 14px; }
     .bar { margin: 6px 0; }
     .epiTime { font-size: 46px; }
+    .alertBar .al { font-size: 19px; padding: 6px 14px; }
+  }
+  /* 橫向：頂部警示變多時，大計時數字依左欄剩餘高度縮小；仍不夠時左欄可捲動（不裁切） */
+  @media (min-width: 900px) and (orientation: landscape) {
+    main { row-gap: 0; }
+    header, .banner, .alertBar { margin-bottom: 12px; }
+    .colL { container-type: size; }
+    .ev { font-size: 18px; padding: 8px 4px; }
+    .colL .bigtime { font-size: clamp(44px, calc(100cqh - 625px), 170px); }
+  }
+  @media (min-width: 900px) and (orientation: landscape) and (max-height: 820px) {
+    .colL .bigtime { font-size: clamp(44px, calc(100cqh - 515px), 130px); }
   }
 </style>
 </head>
@@ -221,8 +235,7 @@
   <div class="col colL">
   <!-- CPR cycle -->
   <section class="card" id="cprCard" data-state="idle" aria-labelledby="cprH">
-    <h2 id="cprH"><span>CPR 週期（2 分鐘）</span><span id="cycleNo">尚未開始</span></h2>
-    <div class="overtime" id="overtime" aria-live="polite" hidden></div>
+    <h2 id="cprH"><span>CPR 週期（2 分鐘）</span><span class="overtime" id="overtime" aria-live="polite" hidden></span><span id="cycleNo">尚未開始</span></h2>
     <div class="bigtime" id="cprTime" aria-live="off">02:00</div>
     <div class="bar"><div id="cprBar"></div></div>
     <div class="status" id="cprStatus" aria-live="polite">● 準備就緒</div>
@@ -257,7 +270,6 @@
         <button class="btn small" data-rhythm="VF/pVT（可電擊）">VF / pVT</button>
         <button class="btn small" data-rhythm="PEA（不可電擊）">PEA</button>
         <button class="btn small" data-rhythm="Asystole（不可電擊）">Asystole</button>
-        <button class="btn small" data-rhythm="有組織心律，檢查脈搏">有組織心律</button>
       </div>
       <div class="row" style="margin-top:8px"><button class="btn small" id="rhythmCancel">取消</button></div>
     </div>
@@ -288,10 +300,6 @@
     </div>
     <div class="ticks" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6 分</span></div>
     <div class="epiStatus" id="epiStatus" aria-live="polite"></div>
-    <div class="alertBox" id="epiAlert" hidden role="alert">
-      <span id="epiAlertText"></span>
-      <button class="btn small" id="epiAck">知道了</button>
-    </div>
   </section>
 
   <!-- Log -->
@@ -300,15 +308,21 @@
     <div class="logHead">
       <div class="total">總經過時間 <b id="totalTime">--:--</b><span class="subNote">不受 CPR 暫停影響</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn small" id="btnCopy">複製 log</button>
+        <button class="btn small" id="btnDownload">下載 log</button>
+        <button class="btn small" id="btnCsv">下載 CSV</button>
         <button class="btn small" id="btnNew">開新案例</button>
       </div>
     </div>
     <div class="msg" id="copyMsg" aria-live="polite"></div>
-    <textarea class="manual" id="manualCopy" readonly hidden></textarea>
     <p class="empty" id="logEmpty">尚無紀錄</p>
     <ol class="log" id="logList"></ol>
   </section>
+
+  <!-- H's & T's -->
+  <details class="card setCard" id="htCard">
+    <summary>🔍 H's &amp; T's 可逆病因 <span class="subNote" id="htCount"></span></summary>
+    <div class="htList" id="htList"></div>
+  </details>
 
   <!-- Settings -->
   <details class="card setCard">
@@ -332,10 +346,11 @@
         </select>
       </label>
     </div>
-    <p style="font-size:12px;color:var(--muted);margin:8px 0 0">時間速度只能在案例開始前更改。紀錄會自動存在這台裝置的瀏覽器，重新整理後仍會還原；按「開新案例」才會清除。</p>
+    <p style="font-size:12px;color:var(--muted);margin:8px 0 0">時間速度只能在按「開始 CPR」前更改；總經過時間從「開始 CPR」起算，之前的紀錄標示為「CPR 前」。紀錄會自動存在這台裝置的瀏覽器，重新整理後仍會還原；按「開新案例」才會清除。</p>
   <footer>
     訓練用原型，不是醫療器材；請依當地 protocol 與醫療指揮執行。CPR 計時進行中會以每分鐘 120 下的短促「滴」聲提示按壓速率（與 2 分鐘、Epinephrine 的「嗶」聲不同）；超過 2 分鐘仍會繼續，直到按「下一輪」（重新計時並繼續）、「暫停」（停住超時計時，按「繼續」可接續）或「重置」；「暫停」只停 CPR 週期，總經過時間與距上次 Epinephrine 仍持續計時（受示範速度影響）；節拍固定為真實時間，不受示範加速影響。iPhone 開啟靜音模式時不會有聲音，請以畫面閃爍為準。<br>
-    參考：<a href="https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support" target="_blank" rel="noopener">AHA Adult Advanced Life Support</a>（CPR 每 2 分鐘檢查心律；Epinephrine 每 3–5 分鐘；Amiodarone 首劑 300 mg、第二劑 150 mg）
+    參考：<a href="https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support" target="_blank" rel="noopener">AHA Adult Advanced Life Support</a>（CPR 每 2 分鐘檢查心律；Epinephrine 每 3–5 分鐘；Amiodarone 首劑 300 mg、第二劑 150 mg）<br>
+    首劑 Epinephrine 時機依心律（不可電擊心律盡早給；可電擊心律於初次電擊後仍持續才給）：AHA 2020 Highlights p.14
   </footer>
   </details>
   </div>
@@ -354,6 +369,10 @@
   const $ = (id) => document.getElementById(id);
 
   // ---------- state ----------
+  const HT_ITEMS = ['Hypovolemia', 'Hypoxia', 'Hydrogen ion (acidosis)', 'Hypo-/Hyperkalemia', 'Hypothermia',
+    'Tension pneumothorax', 'Tamponade (cardiac)', 'Toxins', 'Thrombosis (pulmonary)', 'Thrombosis (coronary)'];
+  // rhythm: null | 'shock' | 'nonshock'（最近一次心律檢查，用於首劑 Epinephrine 提示）；roscAt: ROSC 時間（案例結束、計時凍結）
+  function freshEv() { return { shock: 0, epi: 0, epiAt: null, epiAlerted: false, amio: 0, rhythm: null, roscAt: null, ht: [] }; }
   function freshState(keep) {
     const t = Date.now();
     return {
@@ -362,7 +381,7 @@
       t0: null,
       cycle: 0, running: false, remaining: CYCLE_MS, runStart: 0, due: false, dueAt: null,
       duePaused: false, overMs: 0,
-      ev: { shock: 0, epi: 0, epiAt: null, epiAlerted: false, epiAlertShown: false, amio: 0 },
+      ev: freshEv(),
       epiRemindMs: keep ? keep.epiRemindMs : 240000,
       soundOn: keep ? keep.soundOn : true,
       metroOn: keep ? keep.metroOn : true,
@@ -379,6 +398,7 @@
       const d = JSON.parse(raw);
       if (!d || d.v !== 2) return false;
       S = Object.assign(freshState(), d);
+      S.ev = Object.assign(freshEv(), d.ev);
       return true;
     } catch (_) { return false; }
   }
@@ -390,6 +410,9 @@
   }
 
   const now = () => S.simAnchor + (Date.now() - S.realAnchor) * S.speed;
+  // 案例已開始 = 已按「開始 CPR」或已有任何紀錄（S.t0 只在開始 CPR 時設定）
+  const hasCase = () => S.t0 !== null || S.log.length > 0;
+  const caseStart = () => (S.t0 !== null ? S.t0 : S.log.length ? S.log[0].t : now());
 
   // ---------- formatting ----------
   const pad = (n) => String(n).padStart(2, '0');
@@ -481,7 +504,7 @@
   let wakeLock = null;
   let wakeState = 'idle'; // idle | on | unsupported | denied
   async function requestWake() {
-    if (S.t0 === null) return;
+    if (!hasCase()) return;
     if (!('wakeLock' in navigator)) { wakeState = 'unsupported'; renderWake(); return; }
     if (wakeLock && !wakeLock.released) return;
     try {
@@ -509,10 +532,9 @@
 
   // ---------- log ----------
   const KIND_LABEL = { event: '事件', timer: '計時', alert: '提醒', undo: '撤銷' };
-  function relOf(t) { return '+' + fmtDur(t - S.t0, false); }
+  function relOf(t) { return S.t0 === null || t < S.t0 ? 'CPR 前' : '+' + fmtDur(t - S.t0, false); }
   function addLog(kind, text, at) {
     const t = typeof at === 'number' ? at : now();
-    if (S.t0 === null) S.t0 = t;
     const entry = { id: S.nextId++, t, kind, text, voided: false };
     S.log.push(entry);
     return entry.id;
@@ -556,7 +578,7 @@
     return S.running ? Math.max(0, S.remaining - (now() - S.runStart)) : S.remaining;
   }
   function startCycle() {
-    if (S.running || (S.due && !S.duePaused)) return;
+    if (S.running || (S.due && !S.duePaused) || S.ev.roscAt !== null) return;
     const t = now();
     if (S.due && S.duePaused) {
       // resume after pausing during overtime: overtime counter continues from where it stopped
@@ -570,6 +592,7 @@
     }
     if (S.cycle === 0) {
       S.cycle = 1;
+      S.t0 = t;
       addLog('event', '開始 CPR（第 1 輪計時開始）', t);
     } else if (S.remaining === CYCLE_MS) {
       addLog('timer', `第 ${S.cycle} 輪 CPR 計時開始`, t);
@@ -597,7 +620,8 @@
     commit();
   }
   function resetCycle() {
-    if (S.cycle === 0) return;
+    if (S.cycle === 0 || S.ev.roscAt !== null) return;
+    S.ev.rhythm = null;
     S.running = false;
     S.remaining = CYCLE_MS;
     S.due = false;
@@ -608,7 +632,7 @@
     commit();
   }
   function nextCycle() {
-    if (S.cycle === 0) return;
+    if (S.cycle === 0 || S.ev.roscAt !== null) return;
     const t = now();
     if (S.due && (S.duePaused || S.dueAt !== null)) {
       const over = S.duePaused ? S.overMs : t - S.dueAt;
@@ -629,8 +653,9 @@
 
   // ---------- events (undoable) ----------
   function snapshotEv() { return JSON.parse(JSON.stringify(S.ev)); }
-  function pushUndo(label, evBefore, ids) {
-    S.undo.push({ label, ev: evBefore, ids });
+  const CYC_KEYS = ['running', 'remaining', 'runStart', 'due', 'dueAt', 'duePaused', 'overMs'];
+  function pushUndo(label, evBefore, ids, cyc) {
+    S.undo.push({ label, ev: evBefore, ids, cyc });
     if (S.undo.length > 50) S.undo.shift();
   }
   function flash(btn) {
@@ -643,15 +668,15 @@
   function logEvent(key, btn, extra) {
     const t = now();
     const before = snapshotEv();
-    let text;
+    let text, cyc;
     if (key === 'shock') {
       S.ev.shock += 1;
       text = `電擊（第 ${S.ev.shock} 次）`;
+      if (S.ev.rhythm === 'shock') S.ev.rhythm = null; // 已電擊：收起「可電擊心律」提示
     } else if (key === 'epi') {
       S.ev.epi += 1;
       S.ev.epiAt = t;
       S.ev.epiAlerted = false;
-      S.ev.epiAlertShown = false;
       text = `Epinephrine 1 mg（第 ${S.ev.epi} 次）`;
     } else if (key === 'amio') {
       S.ev.amio += 1;
@@ -659,16 +684,28 @@
            : S.ev.amio === 2 ? 'Amiodarone 150 mg（第 2 劑）'
            : `Amiodarone（第 ${S.ev.amio} 次記錄，已超過建議兩劑）`;
     } else if (key === 'rhythm') {
+      S.ev.rhythm = /^VF/.test(extra) ? 'shock' : /不可電擊/.test(extra) ? 'nonshock' : null;
       text = `心律檢查：${extra}`;
     } else if (key === 'airway') {
       text = '建立高級呼吸道';
     } else if (key === 'rosc') {
-      text = 'ROSC';
+      if (S.ev.roscAt !== null) return;
+      // ROSC：凍結 CPR 週期（含超時）、節拍與提醒；撤銷時還原原本的週期狀態
+      cyc = {};
+      for (const k of CYC_KEYS) cyc[k] = S[k];
+      if (S.running) { S.remaining = Math.max(0, S.remaining - (t - S.runStart)); S.running = false; }
+      if (S.due && !S.duePaused && S.dueAt !== null) { S.overMs = Math.max(0, t - S.dueAt); S.duePaused = true; }
+      S.ev.roscAt = t;
+      text = 'ROSC（計時停止）';
+    } else if (key === 'ht') {
+      const on = !S.ev.ht.includes(extra);
+      S.ev.ht = on ? S.ev.ht.concat(extra) : S.ev.ht.filter((x) => x !== extra);
+      text = on ? `排除/處理：${extra}` : `取消勾選：${extra}`;
     } else if (key === 'note') {
       text = extra;
     } else return;
     const id = addLog('event', text, t);
-    pushUndo(text, before, [id]);
+    pushUndo(text, before, [id], cyc);
     flash(btn);
     requestWake();
     commit();
@@ -677,6 +714,7 @@
     const u = S.undo.pop();
     if (!u) return;
     S.ev = u.ev;
+    if (u.cyc) Object.assign(S, u.cyc);
     for (const e of S.log) if (u.ids.includes(e.id)) e.voided = true;
     addLog('undo', `撤銷：${u.label}`);
     commit();
@@ -684,9 +722,10 @@
 
   // ---------- render ----------
   function render() {
-    const t = now();
+    const rosc = S.ev.roscAt !== null;
+    const t = rosc ? S.ev.roscAt : now(); // ROSC 後總經過時間與 Epinephrine 計時凍結
     const rem = cprRemaining();
-    const st = S.due ? (S.duePaused ? 'paused' : 'due') : S.running ? 'running' : (S.cycle > 0 && rem < CYCLE_MS) ? 'paused' : 'idle';
+    const st = rosc ? 'rosc' : S.due ? (S.duePaused ? 'paused' : 'due') : S.running ? 'running' : (S.cycle > 0 && rem < CYCLE_MS) ? 'paused' : 'idle';
     const card = $('cprCard');
     if (card.dataset.state !== st) card.dataset.state = st;
     setText($('cprTime'), S.due && S.duePaused ? `+${fmtDur(S.overMs, false)}`
@@ -695,7 +734,7 @@
     setText($('cycleNo'), S.cycle ? `第 ${S.cycle} 輪` : '尚未開始');
 
     const ot = $('overtime');
-    ot.hidden = !(S.due && (S.duePaused || S.dueAt !== null));
+    ot.hidden = rosc || !(S.due && (S.duePaused || S.dueAt !== null));
     setText(ot, '已超時');
 
     setText($('cprStatus'), {
@@ -703,18 +742,22 @@
       running: '▶ CPR 進行中' + (S.metroOn && (!audioCtx || audioCtx.state !== 'running') ? '（點一下畫面以啟用節拍聲）' : ''),
       paused: S.due ? '⏸ 超時中已暫停：按「繼續」接續，或按「下一輪」' : '⏸ 已暫停：按「繼續」',
       due: '⚠ 2 分鐘到：檢查心律 / 換手，然後按「下一輪」',
+      rosc: '❤ 已記錄 ROSC：CPR 週期、節拍與提醒已停止（可撤銷 ROSC 或開新案例）',
     }[st]);
     setText($('btnStart'), S.cycle === 0 ? '▶ 開始 CPR' : '▶ 繼續');
     const dueActive = S.due && !S.duePaused;
-    $('btnStart').disabled = S.running || dueActive;
+    $('btnStart').disabled = S.running || dueActive || rosc;
     $('btnPause').disabled = !(S.running || dueActive);
     $('pauseNote').hidden = st !== 'paused';
-    $('btnReset').disabled = S.cycle === 0;
-    $('btnNext').disabled = S.cycle === 0;
+    $('btnReset').disabled = S.cycle === 0 || rosc;
+    $('btnNext').disabled = S.cycle === 0 || rosc;
+    document.querySelector('.ev[data-event="rosc"]').disabled = rosc;
 
     setText($('cShock'), String(S.ev.shock));
     setText($('cEpi'), String(S.ev.epi));
     setText($('cAmio'), String(S.ev.amio));
+    document.querySelectorAll('#htList input').forEach((cb) => { cb.checked = S.ev.ht.includes(cb.value); });
+    setText($('htCount'), S.ev.ht.length ? `（已勾 ${S.ev.ht.length}/${HT_ITEMS.length}）` : '');
 
     const ub = $('btnUndo');
     const last = S.undo[S.undo.length - 1];
@@ -743,10 +786,8 @@
       epiCard.dataset.state = es;
       setText($('epiStatus'), msg);
     }
-    $('epiAlert').hidden = !S.ev.epiAlertShown;
-    if (S.ev.epiAlertShown && S.ev.epiAt !== null) setText($('epiAlertText'), `距上次 Epinephrine（${fmtWall(S.ev.epiAt)}）已 ${remindLabel()}`);
     renderAlerts(t);
-    setText($('totalTime'), S.t0 === null ? '--:--' : fmtDur(t - S.t0, false));
+    setText($('totalTime'), S.t0 === null ? '--:--' : fmtDur(Math.max(0, t - S.t0), false));
 
     $('speedSel').disabled = S.t0 !== null;
     const sb = $('speedBadge');
@@ -757,6 +798,12 @@
   // 頂部警示：完全由現有 S 衍生，不新增狀態
   function renderAlerts(t) {
     const list = [];
+    // 首劑 Epinephrine 依心律提示（AHA 2020 Highlights p.14），直到記錄第一次 Epinephrine
+    if (S.ev.epi === 0 && S.ev.rhythm === 'nonshock') {
+      list.push({ k: 'rhyNS', sev: 'danger', txt: '💉 不可電擊心律：盡早給 Epinephrine', say: '不可電擊心律：盡早給 Epinephrine' });
+    } else if (S.ev.epi === 0 && S.ev.rhythm === 'shock') {
+      list.push({ k: 'rhyS', sev: 'warn', txt: '⚡ 可電擊心律：先電擊＋CPR，電擊後仍持續才給 Epinephrine', say: '可電擊心律：先電擊加 CPR，電擊後仍持續才給 Epinephrine' });
+    }
     if (S.due && S.duePaused) {
       list.push({ k: 'cpr', sev: 'danger', txt: `⚠ CPR 週期已超過 2 分鐘：已超時 <b>+${fmtDur(S.overMs, false)}</b>（已暫停）`, say: 'CPR 週期已超過 2 分鐘（已暫停）' });
     } else if (S.due && S.dueAt !== null) {
@@ -770,6 +817,7 @@
         list.push({ k: 'epiRemind', sev: 'warn', txt: `⏰ Epinephrine 已達 ${remindLabel()} 提醒：距上次 <b>${fmtDur(since, false)}</b>，<b>${fmtDur(EPI_WIN_END - since, true)}</b> 後超過 5 分鐘`, say: `Epinephrine 已達 ${remindLabel()} 提醒` });
       }
     }
+    if (S.ev.roscAt !== null) list.length = 0; // ROSC：案例結束，不再顯示警示
     const bar = $('alertBar');
     const sig = list.map((a) => a.k).join(',');
     if (bar.dataset.sig !== sig) {
@@ -798,10 +846,8 @@
       beep(3, 880);
       changed = true;
     }
-    if (S.ev.epiAt !== null && !S.ev.epiAlerted && now() - S.ev.epiAt >= S.epiRemindMs) {
+    if (S.ev.epiAt !== null && S.ev.roscAt === null && !S.ev.epiAlerted && now() - S.ev.epiAt >= S.epiRemindMs) {
       S.ev.epiAlerted = true;
-      S.ev.epiAlertShown = true;
-      setText($('epiAlertText'), `距上次 Epinephrine（${fmtWall(S.ev.epiAt)}）已 ${remindLabel()}`);
       addLog('alert', `Epinephrine ${remindLabel()} 提醒`, S.ev.epiAt + S.epiRemindMs);
       beep(2, 660);
       changed = true;
@@ -809,38 +855,44 @@
     if (changed) commit(); else render();
   }
 
-  // ---------- copy ----------
+  // ---------- log export ----------
   function logText() {
     const rows = S.log.slice().sort((a, b) => a.t - b.t || a.id - b.id);
     return [
       '急救計時器 log（訓練用途，請依當地 protocol 與醫療指揮）',
-      `日期 ${fmtDate(S.t0)}；相對時間從第一筆紀錄起算`,
+      `日期 ${fmtDate(caseStart())}；相對時間從「開始 CPR」起算`,
       `合計：電擊 ${S.ev.shock} 次、Epinephrine ${S.ev.epi} 次、Amiodarone ${S.ev.amio} 次`,
       ['相對時間', '實際時間', '類別', '內容'].join('\t'),
       ...rows.map((e) => [relOf(e.t), fmtWall(e.t), KIND_LABEL[e.kind], e.text + (e.voided ? '（已撤銷）' : '')].join('\t')),
     ].join('\n');
   }
-  async function copyLog() {
+  function logCsv() {
+    const q = (v) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const rows = S.log.slice().sort((a, b) => a.t - b.t || a.id - b.id);
+    return '﻿' + [
+      ['時間(總計)', '時鐘時間', '事件'],
+      ...rows.map((e) => [relOf(e.t), fmtWall(e.t), e.text + (e.voided ? '（已撤銷）' : '')]),
+    ].map((r) => r.map(q).join(',')).join('\r\n');
+  }
+  function downloadLog(csv) {
     const msg = $('copyMsg');
-    const ta = $('manualCopy');
-    if (!S.log.length) { setText(msg, '尚無紀錄可複製'); return; }
-    const text = logText();
-    let ok = false;
-    try {
-      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); ok = true; }
-    } catch (_) { ok = false; }
-    if (ok) { ta.hidden = true; setText(msg, `✓ 已複製 ${S.log.length} 筆`); }
-    else {
-      ta.value = text; ta.hidden = false; ta.focus(); ta.select();
-      setText(msg, '無法自動複製：已選取下方文字，請手動複製');
-    }
+    if (!S.log.length) { setText(msg, '尚無紀錄可下載'); return; }
+    const d = new Date(caseStart());
+    const name = `cpr-log-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.${csv ? 'csv' : 'txt'}`;
+    const url = URL.createObjectURL(csv ? new Blob([logCsv()], { type: 'text/csv;charset=utf-8' })
+      : new Blob([logText()], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setText(msg, `✓ 已下載 ${name}`);
   }
 
   // ---------- new case (two-tap confirm, no dialogs) ----------
   let newArmed = null;
   function newCase() {
     const b = $('btnNew');
-    if (S.t0 === null) return;
+    if (!hasCase()) return;
     if (!newArmed) {
       b.textContent = '再按一次確認清除';
       b.classList.add('danger');
@@ -854,7 +906,6 @@
     clearStore();
     releaseWake();
     $('restoreBanner').hidden = true;
-    $('manualCopy').hidden = true;
     setText($('copyMsg'), '已清除，可開始新案例');
     save();
     renderLog(); render();
@@ -867,7 +918,8 @@
   $('btnReset').addEventListener('click', resetCycle);
   $('btnNext').addEventListener('click', nextCycle);
   $('btnUndo').addEventListener('click', undoLast);
-  $('btnCopy').addEventListener('click', copyLog);
+  $('btnDownload').addEventListener('click', () => downloadLog(false));
+  $('btnCsv').addEventListener('click', () => downloadLog(true));
   $('btnNew').addEventListener('click', newCase);
 
   const picker = $('rhythmPicker');
@@ -899,13 +951,19 @@
     logEvent('note', null, v);
   });
 
-  $('epiAck').addEventListener('click', () => { S.ev.epiAlertShown = false; commit(); });
+  const htList = $('htList');
+  for (const item of HT_ITEMS) {
+    const lab = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = item;
+    cb.addEventListener('change', () => logEvent('ht', null, item));
+    lab.append(cb, item);
+    htList.appendChild(lab);
+  }
+
   $('epiRemind').addEventListener('change', () => {
     S.epiRemindMs = Number($('epiRemind').value) * 1000;
-    if (S.ev.epiAt !== null && now() - S.ev.epiAt < S.epiRemindMs) {
-      S.ev.epiAlerted = false;
-      S.ev.epiAlertShown = false;
-    }
+    if (S.ev.epiAt !== null && now() - S.ev.epiAt < S.epiRemindMs) S.ev.epiAlerted = false;
     updateRemindUi();
     save();
     tick();
@@ -938,18 +996,18 @@
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      if (S.t0 !== null) requestWake();
+      if (hasCase()) requestWake();
       tick();
     }
   });
   window.addEventListener('beforeunload', (e) => {
-    if (S.t0 !== null) { save(); e.preventDefault(); e.returnValue = ''; }
+    if (hasCase()) { save(); e.preventDefault(); e.returnValue = ''; }
   });
 
   // ---------- boot ----------
-  if (load() && S.t0 !== null) {
+  if (load() && hasCase()) {
     $('restoreBanner').hidden = false;
-    setText($('restoreText'), `已還原進行中的紀錄（開始於 ${fmtWall(S.t0)}，共 ${S.log.length} 筆）。要重來請按「開新案例」。`);
+    setText($('restoreText'), `已還原進行中的紀錄（開始於 ${fmtWall(caseStart())}，共 ${S.log.length} 筆）。要重來請按「開新案例」。`);
   }
   $('speedSel').value = String(S.speed);
   renderSound();
