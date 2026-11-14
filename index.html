@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0a0d12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="CPR 計時">
 <title>急救計時器 改良版（訓練用）</title>
 <style>
   :root {
@@ -1038,6 +1044,10 @@
   tick();
   (function loop() { tick(); setTimeout(loop, Math.max(25, Math.round(250 / S.speed))); })();
 })();
+</script>
+<script>
+  // PWA：加到主畫面後可離線使用（直接開本機檔案時不註冊）
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>
